@@ -12,7 +12,8 @@ contact: Toshihiko ASO aso.toshihiko@gmail.com / https://www.researchgate.net/pr
 ### Dependencies
 For Linux/Mac. MATLAB scripts call [FSL][] commands and [SPM12] functions. 
 - Install FSL & MATLAB then evoke MATLAB from the shell.
-- **niimath** from https://github.com/rordenlab/niimath is preferred because **fslmaths** in FSL6 may not funciton with the option "-subsamp2offc".
+- **niimath** from https://github.com/rordenlab/niimath is preferred because **fslmaths** in FSL6 may not funciton with the option "-subsamp2offc". FSL5 works fine, but no longer actively maintained.
+
 
 [FSL]: https://fsl.fmrib.ox.ac.uk/fsl/fslwiki "FSL"
 [SPM12]: https://www.fil.ion.ucl.ac.uk/spm/software/spm12/
