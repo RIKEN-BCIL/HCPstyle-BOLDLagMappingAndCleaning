@@ -20,8 +20,9 @@ For Linux/Mac. MATLAB scripts call [FSL][] commands and [SPM12] functions.
 
 ### Usage
 
-Main script **Einsteining_v02.m** (Einsteining version 0.2, uses niimath) calls **drLag4Drev4_hcp_niimath.m** for tracking and **drDeperf_hcp_seed_niimath.m** for deperfusioning.
-Main script **Einsteining_v01.m** (Einsteining version 0.1) calls **drLag4Drev4_hcp.m** for tracking and **drDeperf_hcp_seed.m** for deperfusioning.
+> Main script **Einsteining_v02.m** (Einsteining version 0.2, uses niimath) calls **drLag4Drev4_hcp_niimath.m** for tracking and **drDeperf_hcp_seed_niimath.m** for deperfusioning.
+
+> Main script **Einsteining_v01.m** (Einsteining version 0.1) calls **drLag4Drev4_hcp.m** for tracking and **drDeperf_hcp_seed.m** for deperfusioning.
 
 
 - **Einsteining** is a hard working process to pick up Einstein face (neural signal) by (1) extracting perfusion lag structure, a major component of physiological noise for fMRI, and (2) removing it. 
