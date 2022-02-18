@@ -28,6 +28,24 @@ Main script **Einsteining_v01.m** (Einsteining version 0.1) calls **drLag4Drev4_
 - Modify "Fdir" to point to your **FSL5** installation.
 - For drLag4D scripts, note that tracking range should now be specified in TR, not seconds. Arguments are given in text at present.
 
+### Examples
+
+ For input data BOLD_REST1_AP, BOLD_REST1_PA, BOLD_REST2_AP, BOLD_REST2_PA 
+ output directories will be dep_BOLD_REST1_AP, dep_BOLD_REST1_PA, dep_BOLD_REST2_AP, dep_BOLD_REST2_PA 
+
+ Example usage:
+ Einsteining_v01( Sdir, 0.80, 375, 9, 0.3, 0, 8, 0)
+
+ Sdir: Subject directory
+ TR = 0.8s
+ Number of volumes per run = 375
+ MaxLag = 8 -> lag mapping up to -8TR / +8TR
+ MinR = 0.2 -> Cross-correlogram peak < 0.2 will not be used
+ Fixed = 0  -> Recursive (flexible) LFO instead of Fixed-sLFO algorithm
+ Spatial smoothing at 8mm FWHM
+ onlyLag = 0 -> Lag mapping + deperfusioning
+ 
+
 ![sLFO_anim](https://github.com/RIKEN-BCIL/BOLDLagMapping/blob/master/Lag_model_anim100.gif)
 
 Older scripts for more general use:
