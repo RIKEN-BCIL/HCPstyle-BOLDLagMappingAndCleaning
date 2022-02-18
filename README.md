@@ -10,6 +10,7 @@ contact: Toshihiko ASO aso.toshihiko@gmail.com / https://www.researchgate.net/pr
 #### - BOLD deperfusioning is extracting Einstein (local neurovascular coupling) by removing smooth Marilyn Monroe (perfusion structure), so that the fMRI result becomes sharp and precise.
 
 ### Dependencies
+=
 For Linux/Mac. MATLAB scripts call [FSL][] commands and [SPM12] functions. 
 - Install FSL & MATLAB then evoke MATLAB from the shell.
 - **niimath** from https://github.com/rordenlab/niimath is preferred because **fslmaths** in FSL6 may not funciton with the option "-subsamp2offc". FSL5 works fine, but no longer actively maintained.
@@ -19,10 +20,11 @@ For Linux/Mac. MATLAB scripts call [FSL][] commands and [SPM12] functions.
 [SPM12]: https://www.fil.ion.ucl.ac.uk/spm/software/spm12/
 
 ### Usage
+=
 
-<h1>Main script **Einsteining_v02.m** (Einsteining version 0.2, uses niimath) calls **drLag4Drev4_hcp_niimath.m** for tracking and **drDeperf_hcp_seed_niimath.m** for deperfusioning.</h1>
+@ Main script **Einsteining_v02.m** (Einsteining version 0.2, uses niimath) calls **drLag4Drev4_hcp_niimath.m** for tracking and **drDeperf_hcp_seed_niimath.m** for deperfusioning.</h1>
 
-= Main script **Einsteining_v01.m** (Einsteining version 0.1) calls **drLag4Drev4_hcp.m** for tracking and **drDeperf_hcp_seed.m** for deperfusioning.
+@ Main script **Einsteining_v01.m** (Einsteining version 0.1) calls **drLag4Drev4_hcp.m** for tracking and **drDeperf_hcp_seed.m** for deperfusioning.
 
 
 - **Einsteining** is a hard working process to pick up Einstein face (neural signal) by (1) extracting perfusion lag structure, a major component of physiological noise for fMRI, and (2) removing it. 
@@ -31,6 +33,7 @@ For Linux/Mac. MATLAB scripts call [FSL][] commands and [SPM12] functions.
 - For drLag4D scripts, note that tracking range should now be specified in TR, not seconds. Arguments are given in text at present.
 
 ### Examples
+=
 
  For input data _BOLD_REST1_AP, BOLD_REST1_PA, BOLD_REST2_AP, BOLD_REST2_PA_ 
  
