@@ -5,7 +5,6 @@ contact: Toshihiko ASO aso.toshihiko@gmail.com / https://www.researchgate.net/pr
 ## **Pipeline for extraction and removal of the perfusion lag structure within 4D BOLD-fMRI data in HCP-style protocols**
 
 ![lagmap_anim](https://github.com/RIKEN-BCIL/BOLDLagMapping/blob/master/lagmap_anim.gif)
-![sLFO_anim](https://github.com/RIKEN-BCIL/BOLDLagMapping/blob/master/Lag_model_anim100.gif)
 ![smoothnoisestructure](https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Hybrid_image_decomposition.jpg/256px-Hybrid_image_decomposition.jpg)
 
 #### - BOLD deperfusioning is extracting Einstein (local neurovascular coupling) by removing smooth Marilyn Monroe (perfusion structure), so that the fMRI result becomes sharp and precise.
@@ -28,7 +27,7 @@ Main script **Einsteining_v01.m** (Einsteining version 0.1) calls **drLag4Drev4_
 - Application **before** ICA-FIX is recommended (see Aso & Hayashi, ISMRM2022)
 - Modify "Fdir" to point to your **FSL5** installation.
 
--~-~-~-~-~-~-~-~-~-~
+![sLFO_anim](https://github.com/RIKEN-BCIL/BOLDLagMapping/blob/master/Lag_model_anim100.gif)
 
 Older scripts for more general use:
 https://github.com/RIKEN-BCIL/BOLDLagMapping
