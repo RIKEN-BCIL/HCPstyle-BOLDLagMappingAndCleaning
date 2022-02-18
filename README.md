@@ -32,13 +32,12 @@ For Linux/Mac. MATLAB scripts call [FSL][] commands and [SPM12] functions.
 - For drLag4D scripts, note that tracking range should now be specified in TR, not seconds. Arguments are given in text at present.
 
 ### Examples
-=
 
  For input data _BOLD_REST1_AP, BOLD_REST1_PA, BOLD_REST2_AP, BOLD_REST2_PA_ 
  
  output directories will be _dep_BOLD_REST1_AP, dep_BOLD_REST1_PA, dep_BOLD_REST2_AP, dep_BOLD_REST2_PA_
 
- Example usage:
+#### Example usage:
  
  _Einsteining_v02( Sdir, 0.80, 375, 9, 0.3, 0, 8, 0)_
 
