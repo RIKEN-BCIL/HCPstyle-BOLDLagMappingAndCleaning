@@ -26,6 +26,7 @@ Main script **Einsteining_v01.m** (Einsteining version 0.1) calls **drLag4Drev4_
 - **Einsteining** is a hard working process to pick up Einstein face (neural signal) by (1) extracting perfusion lag structure, a major component of physiological noise for fMRI, and (2) removing it. 
 - Application **before** ICA-FIX is recommended (see Aso & Hayashi, ISMRM2022)
 - Modify "Fdir" to point to your **FSL5** installation.
+- For drLag4D scripts, note that tracking range should now be specified in TR, not seconds. Arguments are given in text at present.
 
 ![sLFO_anim](https://github.com/RIKEN-BCIL/BOLDLagMapping/blob/master/Lag_model_anim100.gif)
 
