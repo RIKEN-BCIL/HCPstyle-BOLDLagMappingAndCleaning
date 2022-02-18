@@ -33,7 +33,8 @@ For Linux/Mac. MATLAB scripts call [FSL][] commands and [SPM12] functions.
 ### Examples
 
  For input data _BOLD_REST1_AP, BOLD_REST1_PA, BOLD_REST2_AP, BOLD_REST2_PA_ 
- output directories will be _dep_BOLD_REST1_AP, dep_BOLD_REST1_PA, dep_BOLD_REST2_AP, dep_BOLD_REST2_PA _
+ 
+ output directories will be _dep_BOLD_REST1_AP, dep_BOLD_REST1_PA, dep_BOLD_REST2_AP, dep_BOLD_REST2_PA_
 
  Example usage:
  
