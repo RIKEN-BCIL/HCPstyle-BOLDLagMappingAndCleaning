@@ -1,4 +1,4 @@
-function Einsteining_v02( Sdir, TR, Nvols, MaxLag, MinR, Fixed, Sm, onlyLag)
+function Einsteining_v02_REST( Sdir, TR, Nvols, MaxLag, MinR, Fixed, Sm, onlyLag)
 % Pipeline for removal of perfusion lag structure in HCP-style fMRI data
 %
 % All directories named "REST" are treated as source and concatenated
@@ -25,6 +25,14 @@ function Einsteining_v02( Sdir, TR, Nvols, MaxLag, MinR, Fixed, Sm, onlyLag)
 
 Sdir = deblank( Sdir);
 
+if ischar( TR), TR = str2double( TR); end
+if ischar( Nvols), Nvols = str2double( Nvols); end
+if ischar( MaxLag), MaxLag = str2double( MaxLag); end
+if ischar( MinR), MinR = str2double( MinR); end
+if ischar( Fixed), Fixed = str2double( Fixed); end
+if ischar( Sm), Sm = str2double( Sm); end
+if ischar( onlyLag), onlyLag = str2double( onlyLag); end
+
 global Fdir
 Fdir = '/mnt/pub/devel/fsl-5.0.9/bin/'
 
@@ -43,7 +51,7 @@ end
 	[ ~, in] = spm_select( 'FPList', pwd, '.*');
 	Runs = [];
 	for p=1:size( in, 1)
-		if strfind( in( p,:), 'BOLD')*~length( strfind( in( p,:), 'dep_'))
+		if strfind( in( p,:), 'fMRI_')*~length( strfind( in( p,:), 'dep_'))
 			Rname = drFoldername( in( p,:))
 			Vol = spm_select( 'FPList', deblank( in( p,:)), [ '^' Rname '.nii.gz$']);
 
@@ -99,7 +107,7 @@ if ~exist( [ 'REST' num2str( length( Runs)) 'run.nii.gz'], 'file')
 	%		Runs{ p} = absolute_path( nii_scale_dims( Runs{ p}, [1 1 1]*.5))
 			zfile = spm_select( 'FPList', pwd, [ '^z' fname( 1:end-7) '.*']);
 		end
-		Runs{ p} = zfile( end,:);
+%		Runs{ p} = zfile( end,:);
 	end
 	out = drMerge4D_LagmapGZ_fsl5( [ 'REST' num2str( length( Runs)) 'run'], TR, Runs)
 else
@@ -110,9 +118,9 @@ Lag = drLag4Drev4_hcp_niimath( [ 'cat' num2str( length( Runs)) ], num2str( TR), 
 
 if onlyLag, return, end
 
-if exist( [ Lag '/rLagMap.nii'], 'file')
+%if exist( [ Lag '/rLagMap.nii'], 'file')
 	
-else
+%else
 	C = clock;
 	tDir = [ '/tmp/' mfilename num2str( C( 5)) num2str( C( 6)*1000000)];
 
@@ -123,16 +131,16 @@ else
 	movefile( rLag, 'rLagMap.nii')
 	copyfile( 'rLagMap.nii', Lag)
 	system( [ 'rm -rf ' tDir])
-end
+%end
 Lag = [ Lag '/rLagMap.nii'];
 
 for r=1:size( Runs, 1)
 	Deps = [ 'dep_' drFilename( Runs{ r}) ];
-	if ~exist( Deps, 'file')
+%	if ~exist( Deps, 'file')
 		
 	%	drDeperf_hcp_seed_fixit( Deps, Runs{ r}, Lag, TR, r, length( Runs))
 		drDeperf_hcp_seed_niimath( Runs{ r}, Lag, TR, r, length( Runs))
-	end
+%	end
 	
 		if r==length( Runs)
 			cd ..

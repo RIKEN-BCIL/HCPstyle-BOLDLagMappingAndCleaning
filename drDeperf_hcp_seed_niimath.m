@@ -1,4 +1,4 @@
-function drDeperf_hcp_seed( orig_vols, Lag, TR, section, Nruns) 
+function drDeperf_hcp_seed_niimath( orig_vols, Lag, TR, section, Nruns) 
 % Removing BOLD perfusion structure by Toshihiko Aso
 %	
 %

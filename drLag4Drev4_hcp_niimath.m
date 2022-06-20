@@ -1,4 +1,4 @@
-function dir = drLag4Drev4_hcp( name, TR, vols, PosiMax, THR, FIXED, Sm, range)
+function dir = drLag4Drev4_hcp_niimath( name, TR, vols, PosiMax, THR, FIXED, Sm, range)
 %
 %	No resampling version - tracking by TR
 %	Lag mapping of 4D BOLD data by Toshihiko Aso@RIKEN-BDR, Kobe, Japan
@@ -158,7 +158,7 @@ XX = repmat( Seed( Lim+1:end-Lim), [ 1 size( YY,2) size( YY,3)]);
 CC = sum( XX.*YY, 1)./( sum( XX.*XX, 1).^.5 .* sum( YY.*YY, 1).^.5);
 [ R, I] = max( CC, [], 3);
 I( R<THR) = 0;
-I( isnan( Bmask)) = 0;
+I( Bmask ==0) = 0;
 Lag( I==3) = 0; % cross-correlogram peaking at zero: lag=0
 
 Seed0 = nanmean( Y( :, I==3),2);
