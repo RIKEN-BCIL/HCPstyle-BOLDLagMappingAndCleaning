@@ -1,5 +1,7 @@
 # HCPstyle-BOLDLagMappingAndCleaning
 
+## Scrubbing procedure is now under construction!! Too much movements in HCP dataset...
+
 Feedback appreciated: Toshihiko ASO aso.toshihiko@gmail.com / https://www.researchgate.net/profile/Toshihiko_Aso
 
 ## **Pipeline for extraction and removal of the perfusion lag structure within 4D BOLD-fMRI data in HCP-style protocols**
