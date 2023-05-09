@@ -1,6 +1,6 @@
 # HCPstyle-BOLDLagMappingAndCleaning
 
-## Scrubbing procedure is now under construction!! Too much movements in HCP dataset...
+## Try the new scripts from "Release"
 
 Feedback appreciated: Toshihiko ASO aso.toshihiko@gmail.com / https://www.researchgate.net/profile/Toshihiko_Aso
 
