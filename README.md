@@ -10,7 +10,7 @@ Feedback appreciated: Toshihiko ASO aso.toshihiko@gmail.com / https://www.resear
 ![lagmap_anim](https://github.com/RIKEN-BCIL/BOLDLagMapping/blob/master/lagmap_anim.gif)
 ![smoothnoisestructure](https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Hybrid_image_decomposition.jpg/256px-Hybrid_image_decomposition.jpg)
 
-### BOLD deperfusioning is extracting Einstein (local neurovascular coupling) by removing smooth Marilyn Monroe (perfusion structure), so that the fMRI result becomes sharp and precise.
+## BOLD deperfusioning is extracting Einstein (local neurovascular coupling) by removing smooth Marilyn Monroe (perfusion structure), so that the fMRI result becomes sharp and precise.
 
 ## Dependencies
 
@@ -24,25 +24,22 @@ For Linux/Mac. MATLAB scripts call [FSL][] commands and [SPM12] functions.
 
 ## Usage
 
-### Main script **Einsteining_v02.m** (Einsteining version 0.2, uses niimath) calls **drLag4Drev4_hcp_niimath.m** for lag mapping and **drDeperf_hcp_seed_niimath.m** for deperfusioning.</h1>
-
-### Main script **Einsteining_v01.m** (Einsteining version 0.1) calls **drLag4Drev4_hcp.m** for lag mapping and **drDeperf_hcp_seed.m** for deperfusioning.
-
+## Main script **Einsteining_vXX.m** calls **drLag4DrevXX.m** for lag mapping and **drDeperf_hcp_seed_niimath.m** for deperfusioning.
 
 - **Einsteining** is a hard working process to pick up Einstein face (neural signal) by (1) extracting perfusion lag structure, a major component of physiological noise for fMRI, and (2) removing it. 
 - Application **before** ICA-FIX is recommended (see Aso & Hayashi, ISMRM2022)
 - Modify "Fdir" to point to your **FSL5** installation.
 - For drLag4D scripts, note that tracking range should now be specified in TR, not seconds. Arguments are given in text at present.
 
-### Examples
+## Examples
 
  For input data _BOLD_REST1_AP, BOLD_REST1_PA, BOLD_REST2_AP, BOLD_REST2_PA_ 
  
  output directories will be _dep_BOLD_REST1_AP, dep_BOLD_REST1_PA, dep_BOLD_REST2_AP, dep_BOLD_REST2_PA_
 
-#### Example usage:
+### Example usage:
  
- _Einsteining_v02( Sdir, 0.80, 375, 9, 0.3, 0, 8, 0)_
+ _Einsteining_v02( Sdir, 0.8, 478, 8, 0.2, 1, 8, 1)_
 
 - Sdir: Subject directory
 - TR = 0.8s
