@@ -70,6 +70,9 @@ MATLAB version (`z*.nii`, `mreg_z*.nii.gz`, `REST<n>run.nii.gz`, `sm8_18TR.nii`,
 `Lag_fix_18TR_thr2_sm8_cat<n>/{LagOrig,LagMap,MaxR}.nii`, `Seeds.mat`, `rLagMap.nii`,
 `<run>_dep.nii.gz`, `sLFO.mat`) plus `<run>_dep/` folders with symbolic links.
 
+GUI: `boldlag-gui` (or `python -m boldlag.gui`; tkinter, no extra dependency) offers the
+same three functions with a log pane and a lag-map montage (matplotlib) at the end.
+
 Python API: `boldlag.lag4d.lag4d(...)`, `boldlag.merge4d.merge4d(...)`,
 `boldlag.deperf.deperf(...)`, `boldlag.einsteining.einsteining(...)`; the building
 blocks (`boldlag.filters.bptf/regfilt/subsamp2offc`, `boldlag.spm.smooth/reslice`,
