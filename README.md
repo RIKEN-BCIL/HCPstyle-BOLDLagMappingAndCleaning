@@ -87,7 +87,7 @@ Notes on differences from the MATLAB scripts
   DVARS is computed on the raw intensity within the brain, in percent of the mean
   brain signal, and a volume (plus the previous one) is a spike when DVARS exceeds
   `--spike-thr` (default 1.5) x median; all regressors including the spike columns
-  are removed.  The same fix is applied to the MATLAB scripts in `matlab/`.
+  are removed (`--no-despike` to omit them).  The same fix is applied to the MATLAB scripts in `matlab/`.
 
 （最後に日本語あり）
 

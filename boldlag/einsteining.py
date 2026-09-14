@@ -44,7 +44,7 @@ def dvars_spikes(Y, thr=1.5):
     Fixed version of the Einsteining criterion (GitHub issue #2): DVARS is the RMS of
     the frame-to-frame difference of the *raw* intensity within the brain (voxels
     that are never zero), expressed in percent of the mean brain signal; a volume
-    (and the one before it) is a spike when DVARS > ``thr`` x median(DVARS)."""
+    (and the one before it) is a spike when DVARS > ``thr`` x median(DVARS); ``thr=inf`` disables."""
     brain = (Y != 0).all(3) & (Y.mean(3) > 0)
     Ym = Y[brain].astype(np.float64)
     dvars = np.r_[0.0, np.sqrt(np.mean(np.diff(Ym, axis=1) ** 2, axis=0))] / Ym.mean() * 100
@@ -70,7 +70,7 @@ def scrub_run(run, outdir, downsample=True, movement_txt=None, spike_thr=1.5):
         hdr.set_zooms(tuple(np.array(hdr.get_zooms()[:3]) * 2) + (hdr.get_zooms()[3],))
         nib.save(nib.Nifti1Image(Y, aff, hdr), os.path.join(outdir, f'z{fn}.nii'))
     print(f'Motion scrubbing {fn}', flush=True)
-    dvars, spike = dvars_spikes(Y, spike_thr)
+    dvars, spike = dvars_spikes(Y, spike_thr if spike_thr else np.inf)      # spike_thr None/0 = no despiking
     np.savetxt(os.path.join(outdir, f'dvars_{fn}.txt'), dvars, fmt='%.4f')
     print(f'  DVARS median {np.median(dvars):.2f} %, max {dvars.max():.2f} %, {len(spike)} spike volumes', flush=True)
     N = Y.shape[3]
