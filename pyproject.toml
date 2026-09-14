@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "boldlag"
+version = "0.1.0"
+description = "BOLD lag mapping and deperfusioning (Python port of drLag4D / Einsteining)"
+authors = [{name = "Toshihiko Aso", email = "aso.toshihiko@gmail.com"}]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.20", "scipy>=1.7", "nibabel>=3.2"]
+
+[project.optional-dependencies]
+mat73 = ["h5py"]
+
+[project.scripts]
+boldlag = "boldlag.cli:main"
+
+[tool.setuptools]
+packages = ["boldlag"]
+
+[tool.setuptools.package-data]
+boldlag = ["data/*.nii"]
