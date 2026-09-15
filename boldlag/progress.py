@@ -16,7 +16,7 @@ def report(stage, fraction):
     if _cb is not None:
         try:
             _cb(stage, max(0.0, min(1.0, float(fraction))))
-        except Exception:
+        except Exception:       # a broken front end must not kill the job; BaseException (e.g. Streamlit's Stop) propagates
             pass
 
 

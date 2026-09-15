@@ -174,6 +174,10 @@ def app():
             S['last'] = (lagdir, under)
         except Exception as e:
             st.exception(e)
+        except BaseException:               # Streamlit's Stop button: abort the job (intermediate files remain)
+            bar.progress(0.0, text='stopped')
+            st.warning('Stopped. Files written so far remain in the work folder; re-running starts over.')
+            raise
         finally:
             progress.set_callback(None)
     if S.get('last') and S['last'][0]:
