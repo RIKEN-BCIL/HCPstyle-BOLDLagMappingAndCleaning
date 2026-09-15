@@ -211,10 +211,10 @@ def app():
                 shifted = c1.checkbox('time-shifted to lag (regressors)', value=True, key='view_shift')
                 amp = c2.selectbox('amplitude', ['normalised', 'scaled', 'data'], key='view_amp',
                                    help='normalised: as stored (a.u.); scaled: each sLFO scaled by regression onto the mean % signal of its lag region; data: the region means themselves (%)')
-                n = c4.number_input('window length (s)', 20.0, 20000.0, 200.0, 20.0, key='view_n')
+                n = c4.number_input('window length (min)', 0.5, 300.0, 10.0, 0.5, key='view_n')
                 t0 = c3.slider('window start (s)', 0.0, float(max(0, (T - 20) * step)), 0.0, key='view_t0',
                                help='the sLFO covers all concatenated runs; this window is shown (dashed lines = run boundaries)')
-                st.image(lag_structure_plot(lagdir, os.path.join(lagdir, '_lagstructure.png'), int(t0 / step), max(2, int(n / step)), lim, shifted, amplitude=amp))
+                st.image(lag_structure_plot(lagdir, os.path.join(lagdir, '_lagstructure.png'), int(t0 / step), max(2, int(n * 60 / step)), lim, shifted, amplitude=amp))
             except Exception as e:
                 st.warning(f'no Seeds in {lagdir}: {e}')
 
