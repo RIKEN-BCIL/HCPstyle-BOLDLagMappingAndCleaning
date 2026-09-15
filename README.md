@@ -145,7 +145,7 @@ blocks (`boldlag.filters.bptf/regfilt/subsamp2offc`, `boldlag.spm.smooth/reslice
   `--spike-thr` (default 1.5) x median; all regressors including the spike columns
   are removed (`--no-despike` to omit them).  The same fix is applied to the MATLAB scripts in `matlab/`.
 
-## 日本語の説明は[最後](#日本語)にあります
+（日本語の説明は[最後](#日本語)にあります）
 
 ## MATLAB version
 
