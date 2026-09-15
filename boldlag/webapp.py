@@ -54,6 +54,8 @@ def app():
         d = json.load(up)
         for k, v in d.items():
             S[k] = v
+        if 'runs' in d:
+            S['runs_txt'] = '\n'.join(d['runs'])
         S['_loaded'] = up.name + str(up.size)
         st.rerun()
 
@@ -87,9 +89,11 @@ def app():
             from .einsteining import find_runs
             try:
                 S['runs'] = find_runs(subj, pattern, nvols=int(nvols) if nvols.strip() else None)
+                S['runs_txt'] = '\n'.join(S['runs'])          # keyed widgets ignore value= once they have state
             except Exception as e:
                 st.error(str(e))
-        runs_txt = st.text_area('Run files (one per line)', value='\n'.join(S.get('runs', [])), height=120, key='runs_txt')
+        S.setdefault('runs_txt', '\n'.join(S.get('runs', [])))
+        runs_txt = st.text_area('Run files (one per line)', height=120, key='runs_txt')
         runs = [r.strip() for r in runs_txt.splitlines() if r.strip()]
         st.subheader('Lag mapping')
         p = lag_params('p.')
