@@ -22,6 +22,7 @@ from .merge4d import merge4d
 from .lag4d import lag4d
 from .deperf import deperf
 from .spm import reslice
+from . import progress
 
 
 def run_basename(f):
@@ -144,17 +145,24 @@ def einsteining(runs, TR, PosiMax, THR=0.2, FIXED=1, Sm=8, only_lag=False, downs
         json.dump(dict(Runs=runs, Ref=ref, TR=TR, PosiMax=PosiMax, THR=THR, FIXED=FIXED, Sm=Sm, reso=reso,
                        seed_mask=seed_mask, mask_pct=mask_pct, downsample=downsample, spike_thr=spike_thr), f, indent=1)
     n = len(runs)
-    z = [scrub_run(r, wd, downsample, spike_thr=spike_thr) for r in runs]
+    # overall progress budget: scrub 0-0.25, merge 0.25-0.35, lag 0.35-0.65, reslice, deperf 0.65-1
+    z = []
+    for i, r in enumerate(runs):
+        progress.report(f'scrubbing run {i + 1}/{n}', 0.25 * i / n)
+        z.append(scrub_run(r, wd, downsample, spike_thr=spike_thr))
+    progress.report('concatenating runs', 0.25)
     merged = merge4d(('' if downsample else 'hres') + f'REST{n}run', TR, z, wd)
     lagdir = lag4d(f'cat{n}', TR, merged, PosiMax, THR, FIXED, Sm, reso=reso, seed_mask=seed_mask,
-                   mask_pct=mask_pct, lp_hz=lp_hz, cwd=wd)
+                   mask_pct=mask_pct, lp_hz=lp_hz, cwd=wd, span=(0.35, 1.0 if only_lag else 0.65))
     if only_lag:
+        progress.report('finished', 1.0)
         return lagdir
     rlag = reslice_lagmap(os.path.join(lagdir, 'LagMap.nii'), ref, os.path.join(wd, 'rLagMap.nii'))
     shutil.copy(rlag, lagdir)
     for r, run in enumerate(runs, 1):
         print(f'Deperfusioning {run_basename(run)}', flush=True)
-        deperf(run, rlag, TR, r, n, lagdir=lagdir, reso=reso, outdir=wd)
+        deperf(run, rlag, TR, r, n, lagdir=lagdir, reso=reso, outdir=wd,
+               span=(0.65 + 0.35 * (r - 1) / n, 0.65 + 0.35 * r / n))
     for run in runs:
         b = run_basename(run)
         d = os.path.join(results_dir, b + '_dep')
@@ -166,4 +174,5 @@ def einsteining(runs, TR, PosiMax, THR=0.2, FIXED=1, Sm=8, only_lag=False, downs
             if os.path.lexists(p):
                 os.unlink(p)
             os.symlink(target, p)
+    progress.report('finished', 1.0)
     return lagdir

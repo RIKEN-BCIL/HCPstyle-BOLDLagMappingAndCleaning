@@ -14,10 +14,12 @@ dependencies = ["numpy>=1.20", "scipy>=1.7", "nibabel>=3.2"]
 [project.optional-dependencies]
 mat73 = ["h5py"]
 viewer = ["matplotlib"]
+web = ["streamlit", "matplotlib"]
 
 [project.scripts]
 boldlag = "boldlag.cli:main"
 boldlag-gui = "boldlag.gui:main"
+boldlag-web = "boldlag.webapp:main"
 
 [tool.setuptools]
 packages = ["boldlag"]

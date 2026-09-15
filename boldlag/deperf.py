@@ -11,6 +11,7 @@ import nibabel as nib
 from scipy.io import savemat, loadmat
 from scipy.signal import resample_poly
 from .filters import bptf, hp_sigma, regfilt
+from . import progress
 
 
 def _round(x):
@@ -45,7 +46,7 @@ def shifted_seeds(Seeds, MaxLag):
     return np.stack(cols, 1)
 
 
-def deperf(orig_vols, lag_nii, TR, section, Nruns, lagdir=None, reso=None, outdir='.', hp_hz=0.008):
+def deperf(orig_vols, lag_nii, TR, section, Nruns, lagdir=None, reso=None, outdir='.', hp_hz=0.008, span=(0.0, 1.0)):
     """Deperfusion one run.
 
     orig_vols  original 4D run (full resolution)
@@ -78,6 +79,8 @@ def deperf(orig_vols, lag_nii, TR, section, Nruns, lagdir=None, reso=None, outdi
     Moto = Moto[(section - 1) * Nvols:section * Nvols]
     savemat(os.path.join(outdir, 'sLFO.mat'), {'Motodata': Moto})
 
+    sp = progress.Span('deperf: filtering', *span)
+    sp(0.05)
     print('Filtering...', flush=True)
     Y = np.asanyarray(img.dataobj).astype(np.float32)
     Tmean = Y.mean(3)
@@ -86,7 +89,9 @@ def deperf(orig_vols, lag_nii, TR, section, Nruns, lagdir=None, reso=None, outdi
     out = np.repeat(Tmean[..., None], Nvols, axis=3).astype(np.float32)
     print('Cleaning images...', flush=True)
     LL = np.arange(-MaxLag, MaxLag + 1)
+    sp.stage = 'deperf: regressing lag regions'
     for p, L in enumerate(LL):
+        sp(0.4 + 0.55 * p / len(LL))
         m = (Lag == L) & (Tmean != 0)
         if not m.any():
             continue
@@ -96,4 +101,5 @@ def deperf(orig_vols, lag_nii, TR, section, Nruns, lagdir=None, reso=None, outdi
     dst = os.path.join(outdir, base + '_dep.nii.gz')
     hdr = img.header.copy(); hdr.set_data_dtype(np.float32)
     nib.save(nib.Nifti1Image(out, img.affine, hdr), dst)
+    sp(1.0)
     return dst

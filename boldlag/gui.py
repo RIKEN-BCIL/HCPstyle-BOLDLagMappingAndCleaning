@@ -5,9 +5,10 @@ deperfusioning of one run -- run in a background thread with their console outpu
 shown in the log pane; the resulting lag map is displayed as a montage when done.
 No dependencies beyond the package itself (matplotlib for the montage).
 """
-import os, sys, glob, threading, queue, traceback
+import os, sys, glob, json, threading, queue, traceback
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+from . import progress
 
 
 class _QueueWriter:
@@ -28,6 +29,11 @@ class App(tk.Tk):
         self.q = queue.Queue()
         self.worker = None
         self.result = None
+        menu = tk.Menu(self); self.config(menu=menu)
+        fm = tk.Menu(menu, tearoff=0); menu.add_cascade(label='File', menu=fm)
+        fm.add_command(label='Load settings (JSON)...', command=self.load_settings)
+        fm.add_command(label='Save settings (JSON)...', command=self.save_settings)
+        fm.add_separator(); fm.add_command(label='Quit', command=self.destroy)
         nb = ttk.Notebook(self)
         nb.pack(fill='x', padx=8, pady=6)
         self.tab_pipe = ttk.Frame(nb); self.tab_lag = ttk.Frame(nb); self.tab_dep = ttk.Frame(nb)
@@ -44,6 +50,11 @@ class App(tk.Tk):
         ttk.Button(bar, text='Show lag map', command=self.show_result).pack(side='left', padx=6)
         ttk.Button(bar, text='Clear log', command=lambda: self.log.delete('1.0', 'end')).pack(side='left')
         self.status = ttk.Label(bar, text='idle'); self.status.pack(side='right')
+        pf = ttk.Frame(self); pf.pack(fill='x', padx=8, pady=(4, 0))
+        self.pvar = tk.DoubleVar(value=0.0)
+        self.pbar = ttk.Progressbar(pf, variable=self.pvar, maximum=1.0); self.pbar.pack(side='left', fill='x', expand=True)
+        self.pstage = ttk.Label(pf, text='', width=45); self.pstage.pack(side='left', padx=6)
+        progress.set_callback(lambda stage, frac: self.q.put(('progress', stage, frac)))
         self.log = tk.Text(self, height=18, wrap='word', font=('TkFixedFont', 9))
         self.log.pack(fill='both', expand=True, padx=8, pady=6)
         self.after(200, self._poll)
@@ -161,6 +172,49 @@ class App(tk.Tk):
         except Exception as e:
             messagebox.showerror('Find runs', str(e))
 
+    # ---------- settings (JSON)
+    def _vars(self):
+        d = {}
+        for grp, v in [('pipeline', self.pv), ('lag', self.lv)]:
+            for k, var in v.items():
+                d[f'{grp}.{k}'] = var
+        for k in ['subj', 'pattern', 'nvols', 'results_dir', 'workname', 'only_lag', 'downsample', 'despike', 'spike_thr',
+                  'lag_vols', 'lag_name', 'lag_range', 'lag_cwd', 'dep_vols', 'dep_lag', 'dep_TR', 'dep_sec', 'dep_n',
+                  'dep_lagdir', 'dep_reso', 'dep_out']:
+            d[k] = getattr(self, k)
+        return d
+
+    def settings(self):
+        d = {k: v.get() for k, v in self._vars().items()}
+        d['runs'] = list(self.runs.get(0, 'end'))
+        d['tab'] = self.nb.index(self.nb.select())
+        return d
+
+    def apply_settings(self, d):
+        for k, v in self._vars().items():
+            if k in d:
+                v.set(d[k])
+        if 'runs' in d:
+            self.runs.delete(0, 'end')
+            for r in d['runs']:
+                self.runs.insert('end', r)
+        if 'tab' in d:
+            self.nb.select(d['tab'])
+
+    def save_settings(self, path=None):
+        path = path or filedialog.asksaveasfilename(defaultextension='.json', filetypes=[('JSON', '*.json')])
+        if path:
+            with open(path, 'w') as f:
+                json.dump(self.settings(), f, indent=1)
+            self.log.insert('end', f'settings saved to {path}\n')
+
+    def load_settings(self, path=None):
+        path = path or filedialog.askopenfilename(filetypes=[('JSON', '*.json')])
+        if path:
+            with open(path) as f:
+                self.apply_settings(json.load(f))
+            self.log.insert('end', f'settings loaded from {path}\n')
+
     # ---------- execution
     def run(self):
         if self.worker and self.worker.is_alive():
@@ -173,6 +227,7 @@ class App(tk.Tk):
             messagebox.showerror('Parameters', str(e))
             return
         self.result = None
+        self.pvar.set(0.0); self.pstage.config(text='')
         self.status.config(text='running...'); self.run_btn.state(['disabled'])
         self.worker = threading.Thread(target=self._work, args=(job,), daemon=True)
         self.worker.start()
@@ -238,6 +293,8 @@ class App(tk.Tk):
                     self.status.config(text='finished'); self.run_btn.state(['!disabled'])
                     if self.result and self.result.get('lagdir'):
                         self.show_result()
+                elif isinstance(s, tuple):
+                    self.pvar.set(s[2]); self.pstage.config(text=f'{s[1]}  ({100 * s[2]:.0f} %)')
                 else:
                     self.log.insert('end', s); self.log.see('end')
         except queue.Empty:
@@ -267,8 +324,13 @@ class App(tk.Tk):
         ttk.Label(win, text=png).pack()
 
 
-def main():
-    App().mainloop()
+def main(argv=None):
+    """``boldlag-gui [settings.json]``"""
+    argv = sys.argv[1:] if argv is None else argv
+    app = App()
+    if argv:
+        app.load_settings(argv[0])
+    app.mainloop()
 
 
 if __name__ == '__main__':

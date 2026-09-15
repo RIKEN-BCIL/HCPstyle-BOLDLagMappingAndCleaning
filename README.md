@@ -70,8 +70,14 @@ MATLAB version (`z*.nii`, `mreg_z*.nii.gz`, `REST<n>run.nii.gz`, `sm8_18TR.nii`,
 `Lag_fix_18TR_thr2_sm8_cat<n>/{LagOrig,LagMap,MaxR}.nii`, `Seeds.mat`, `rLagMap.nii`,
 `<run>_dep.nii.gz`, `sLFO.mat`) plus `<run>_dep/` folders with symbolic links.
 
-GUI: `boldlag-gui` (or `python -m boldlag.gui`; tkinter, no extra dependency) offers the
-same three functions with a log pane and a lag-map montage (matplotlib) at the end.
+Front ends
+* `boldlag-gui [settings.json]` (or `python -m boldlag.gui`; tkinter, no extra dependency):
+  the three functions with a log pane, a progress bar, a lag-map montage at the end and
+  *File > Save/Load settings* (JSON).
+* `boldlag-web` (or `python -m boldlag.webapp`; needs `pip install streamlit`, i.e.
+  `pip install .[web]`): the same in the browser, e.g. on a compute server
+  (`boldlag-web --server.port 8501`, then open `http://<host>:8501`); settings can be
+  downloaded / uploaded as JSON.
 
 Python API: `boldlag.lag4d.lag4d(...)`, `boldlag.merge4d.merge4d(...)`,
 `boldlag.deperf.deperf(...)`, `boldlag.einsteining.einsteining(...)`; the building

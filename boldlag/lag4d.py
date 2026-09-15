@@ -21,6 +21,7 @@ from scipy.signal import resample_poly
 
 from .filters import bptf, hp_sigma, thrp
 from .spm import smooth, reslice
+from . import progress
 
 HCP_SEED_MASK = os.path.join(os.path.dirname(__file__), 'data', 'BrainMask_lag_subsamp2offc.nii')
 
@@ -103,7 +104,7 @@ def _corr_peak(seed, Y, Lim):
     return R, I
 
 
-def track(Y, Bmask, roi, THR, limit, FIXED=1, on_step=None):
+def track(Y, Bmask, roi, THR, limit, FIXED=1, on_step=None, span=None):
     """Recursive / fixed-seed lag tracking (core of drLag4D).
 
     Y      (T, V) float64 filtered data (already amplitude-gated, resampled to the tracking step)
@@ -158,6 +159,8 @@ def track(Y, Bmask, roi, THR, limit, FIXED=1, on_step=None):
         Seeds.insert(0, SeedU.copy())
         if on_step:
             on_step(p, Lag)
+        if span:
+            span(p / limit)
     Lag[Lag == 100] = np.nan
     return dict(Lag=Lag, maxR=maxR, Seeds=np.stack(Seeds, 1), RawSeed=RawSeed, InitSeed=InitSeed, Ysd=Ysd)
 
@@ -197,7 +200,7 @@ def erode1(Lag):
 
 
 def lag4d(name, TR, vols, PosiMax, THR=0.3, FIXED=1, Sm=8, rng=None, reso=None,
-          seed_mask=None, mask_pct=10, lp_hz=None, amp_gate=4.0, cwd=None, overwrite=False):
+          seed_mask=None, mask_pct=10, lp_hz=None, amp_gate=4.0, cwd=None, overwrite=False, span=(0.0, 1.0)):
     """Lag mapping of a 4D BOLD file (drLag4Drev7 / _longTR / _monkey).
 
     name      string appended to the result folder name
@@ -234,9 +237,12 @@ def lag4d(name, TR, vols, PosiMax, THR=0.3, FIXED=1, Sm=8, rng=None, reso=None,
         print('..use existing LagMap', outdir)
         return outdir
 
+    p0, p1 = span
+    sub = lambda a, b: (p0 + (p1 - p0) * a, p0 + (p1 - p0) * b)
     sm_file = os.path.join(cwd, f'sm{Smooth}_{MaxLag:g}{unit}.nii')
     if not os.path.exists(sm_file):
         print('Preparing the data...', flush=True)
+        progress.report('lag4d: preparing (smoothing / filtering)', sub(0, 0.4)[0])
         prepare(vols, TR, MaxLag_sec, Sm, mask_pct, lp_hz, out_sm=sm_file, cwd=cwd)
 
     mask_img = nib.load(os.path.join(cwd, 'Mask.nii'))
@@ -253,6 +259,7 @@ def lag4d(name, TR, vols, PosiMax, THR=0.3, FIXED=1, Sm=8, rng=None, reso=None,
         Bmask = Mask != 0
         ROI = np.where(Bmask, 1.0, np.nan)
 
+    progress.report('lag4d: reading volumes', sub(0.4, 0.5)[0])
     print('Reading volumes...', flush=True)
     rng = parse_range(rng)
     Y, img = _load4d(sm_file, rng)
@@ -269,7 +276,8 @@ def lag4d(name, TR, vols, PosiMax, THR=0.3, FIXED=1, Sm=8, rng=None, reso=None,
         L = Lag.copy(); L[L > 99] = np.nan
         _save(os.path.join(outdir, 'LagOrig_temp.nii'), L.reshape(shp) * step, aff)
         print(f'  +-{p * step:.2f} s', flush=True)
-    res = track(Y, Bmask.reshape(-1), ROI.reshape(-1), THR, limit, FIXED, on_step)
+    res = track(Y, Bmask.reshape(-1), ROI.reshape(-1), THR, limit, FIXED, on_step,
+                span=progress.Span('lag4d: tracking', *sub(0.5, 0.95)))
     del Y
 
     savemat(os.path.join(outdir, 'RawSeed.mat'), {'Seed': res['RawSeed'][:, None]})
@@ -288,5 +296,6 @@ def lag4d(name, TR, vols, PosiMax, THR=0.3, FIXED=1, Sm=8, rng=None, reso=None,
         json.dump(dict(name=name, TR=TR, vols=os.path.abspath(vols), PosiMax=PosiMax, THR=THR, FIXED=FIXED, Sm=Sm,
                        range=None if rng is None else np.asarray(rng).tolist(), reso=reso, step=step,
                        seed_mask=seed_mask, mask_pct=mask_pct, lp_hz=lp_hz, amp_gate=amp_gate), f, indent=1)
+    progress.report('lag4d: finished', sub(1, 1)[0])
     print('Finished', outdir, flush=True)
     return outdir
