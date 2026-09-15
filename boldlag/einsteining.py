@@ -173,6 +173,13 @@ def einsteining(runs, TR, PosiMax, THR=0.2, FIXED=1, Sm=8, only_lag=False, downs
             p = os.path.join(d, link)
             if os.path.lexists(p):
                 os.unlink(p)
-            os.symlink(target, p)
+            try:
+                os.symlink(target, p)
+            except OSError:                      # e.g. Windows without developer mode: hard link, else copy
+                src = os.path.normpath(os.path.join(d, target))
+                try:
+                    os.link(src, p)
+                except OSError:
+                    shutil.copy(src, p)
     progress.report('finished', 1.0)
     return lagdir

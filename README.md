@@ -57,6 +57,12 @@ boldlag -h
   `streamlit`, `matplotlib`). Omit `[web]` if you do not need the browser front end.
   From a local clone use `pip install ".[web]"` instead.
 * Line 4 prints the usage; `boldlag <command> -h` lists the options of each command.
+* Windows: install Python from python.org (tick "Add python.exe to PATH"), open
+  *Command Prompt* and run `py -m venv %USERPROFILE%\boldlag-env`, then
+  `%USERPROFILE%\boldlag-env\Scripts\activate`, then lines 3–4 (line 3 needs
+  [Git for Windows](https://git-scm.com); without git, download the `.whl` file from the
+  Releases page and run `pip install boldlag-0.1.0-py3-none-any.whl streamlit matplotlib`).
+  The `<run>_dep/` folders get copies instead of symbolic links there.
 * The desktop GUI (`boldlag-gui`) needs a Python with tkinter: on macOS install Python
   from python.org (includes it) or `brew install python-tk`, then create the venv with
   that Python. The browser front end (`boldlag-web`) has no such requirement.
