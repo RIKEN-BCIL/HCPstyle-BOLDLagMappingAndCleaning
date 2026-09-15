@@ -73,6 +73,10 @@ boldlag -h
   `streamlit`, `matplotlib`). Omit `[web]` if you do not need the browser front end.
   From a local clone use `pip install ".[web]"` instead.
 * Line 4 prints the usage; `boldlag <command> -h` lists the options of each command.
+* Working from a clone (developers, or when you edit the scripts): `git clone` the
+  repository and, inside the activated environment, run `pip install -e ".[web]"` in the
+  clone — the installed commands then use the clone directly, so edits and `git pull`
+  take effect without reinstalling.
 * If `boldlag-web` fails with `No module named 'altair.vegalite.v4'` (old pip picked an old
   streamlit), run `python3 -m pip install --upgrade pip` and
   `pip install --upgrade "streamlit>=1.30" "altair>=5"`.
