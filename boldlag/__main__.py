@@ -47,6 +47,7 @@ def main(argv=None):
     p.add_argument('--results-dir', default=None, help='where to write <workname>/ and <run>_dep/ (default: the Results folder of the runs)')
     p.add_argument('--spike-thr', type=float, default=1.5, help='spike if DVARS > thr x median (default 1.5)')
     p.add_argument('--no-despike', action='store_true', help='no spike regressors (motion + FD only)')
+    p.add_argument('--jobs', type=int, default=1, help='runs processed concurrently in scrubbing and deperfusioning (memory: ~3x one run per job)')
 
     a = ap.parse_args(argv)
     from boldlag import lag4d, merge4d, deperf, einsteining
@@ -60,7 +61,7 @@ def main(argv=None):
     elif a.cmd == 'einsteining':
         runs = a.runs or einsteining.find_runs(a.subject_dir, a.pattern, nvols=a.nvols)
         print(einsteining.einsteining(runs, a.TR, a.PosiMax, a.thr, a.fixed, a.sm, a.only_lag, not a.no_downsample,
-                                      a.reso, a.seed_mask, a.mask_pct, a.lp_hz, a.workname, a.results_dir, spike_thr=None if a.no_despike else a.spike_thr))
+                                      a.reso, a.seed_mask, a.mask_pct, a.lp_hz, a.workname, a.results_dir, spike_thr=None if a.no_despike else a.spike_thr, jobs=a.jobs))
 
 
 if __name__ == '__main__':

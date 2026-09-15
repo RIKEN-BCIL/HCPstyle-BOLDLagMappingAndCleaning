@@ -145,6 +145,8 @@ class App(tk.Tk):
         ttk.Checkbutton(opt, text='Spike regressors (DVARS > thr x median)', variable=self.despike).grid(row=3, column=0, columnspan=2, sticky='w')
         ttk.Entry(opt, textvariable=self.spike_thr, width=6).grid(row=3, column=2, sticky='w')
         ttk.Checkbutton(opt, text='Lag mapping only (skip deperfusioning)', variable=self.only_lag).grid(row=4, column=0, columnspan=5, sticky='w')
+        self.jobs = tk.StringVar(value='1')
+        self._entry(opt, 'Parallel runs (jobs)', self.jobs, 5, width=4, tip='scrub / deperf this many runs at once (memory ~3x one run per job)')
         t.columnconfigure(0, weight=3); t.columnconfigure(1, weight=2)
 
     def _build_lag(self):
@@ -208,7 +210,7 @@ class App(tk.Tk):
             for k, var in v.items():
                 d[f'{grp}.{k}'] = var
         for k in ['subj', 'pattern', 'nvols', 'results_dir', 'workname', 'only_lag', 'downsample', 'despike', 'spike_thr',
-                  'lag_vols', 'lag_name', 'lag_range', 'lag_cwd', 'dep_lag', 'dep_TR', 'dep_lagdir', 'dep_reso', 'dep_out']:
+                  'jobs', 'lag_vols', 'lag_name', 'lag_range', 'lag_cwd', 'dep_lag', 'dep_TR', 'dep_lagdir', 'dep_reso', 'dep_out']:
             d[k] = getattr(self, k)
         return d
 
@@ -275,7 +277,7 @@ class App(tk.Tk):
             d = einsteining(runs, kw['TR'], kw['PosiMax'], kw['THR'], kw['FIXED'], kw['Sm'], self.only_lag.get(),
                             self.downsample.get(), kw['reso'], kw['seed_mask'], kw['mask_pct'], kw['lp_hz'],
                             self.workname.get(), self.results_dir.get().strip() or None,
-                            spike_thr=float(self.spike_thr.get()) if self.despike.get() else None)
+                            spike_thr=float(self.spike_thr.get()) if self.despike.get() else None, jobs=int(self.jobs.get() or 1))
             return dict(lagdir=d, underlay=os.path.join(os.path.dirname(d), 'Tmean.nii'))
         return job
 

@@ -15,6 +15,7 @@ Everything is written to ``<Results>/Lag_concat_scrub`` (an existing one is rena
 ``reso`` and ``mask_pct``.
 """
 import os, re, glob, json, shutil
+from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 import nibabel as nib
 from .filters import subsamp2offc, subsamp2offc_affine, regfilt
@@ -140,11 +141,12 @@ def reslice_lagmap(lagmap_nii, ref_nii, out_nii):
 
 def einsteining(runs, TR, PosiMax, THR=0.2, FIXED=1, Sm=8, only_lag=False, downsample=True,
                 reso=None, seed_mask='hcp', mask_pct=10, lp_hz=None, workname='Lag_concat_scrub',
-                results_dir=None, spike_thr=1.5):
+                results_dir=None, spike_thr=1.5, jobs=1):
     """Run the whole pipeline.  ``runs`` = list of 4D run files (HCP layout:
     ``.../MNINonLinear/Results/<run>/<run>.nii.gz`` with ``Movement_Regressors.txt``
     and ``*SBRef.nii.gz`` next to them).  Other arguments as in :func:`lag4d`.
-    Returns the lag-map folder."""
+    ``jobs`` runs are scrubbed / deperfusioned concurrently (threads; each job needs about
+    three times the size of one run in memory).  Returns the lag-map folder."""
     runs = [os.path.abspath(r) for r in runs]
     check_tr(runs[0], TR)
     results_dir = results_dir or os.path.dirname(os.path.dirname(runs[0]))
@@ -164,10 +166,16 @@ def einsteining(runs, TR, PosiMax, THR=0.2, FIXED=1, Sm=8, only_lag=False, downs
                        seed_mask=seed_mask, mask_pct=mask_pct, downsample=downsample, spike_thr=spike_thr), f, indent=1)
     n = len(runs)
     # overall progress budget: scrub 0-0.25, merge 0.25-0.35, lag 0.35-0.65, reslice, deperf 0.65-1
-    z = []
-    for i, r in enumerate(runs):
-        progress.report(f'scrubbing run {i + 1}/{n}', 0.25 * i / n)
-        z.append(scrub_run(r, wd, downsample, spike_thr=spike_thr))
+    jobs = max(1, int(jobs or 1))
+    progress.report(f'scrubbing {n} runs ({jobs} at a time)', 0.0)
+    done = [0]
+    def _scrub(r):
+        out = scrub_run(r, wd, downsample, spike_thr=spike_thr)
+        done[0] += 1
+        progress.report(f'scrubbed run {done[0]}/{n}', 0.25 * done[0] / n)
+        return out
+    with ThreadPoolExecutor(max_workers=min(jobs, n)) as ex:
+        z = list(ex.map(_scrub, runs))                      # keeps the run order
     progress.report('concatenating runs', 0.25)
     merged = merge4d(('' if downsample else 'hres') + f'REST{n}run', TR, z, wd)
     lagdir = lag4d(f'cat{n}', TR, merged, PosiMax, THR, FIXED, Sm, reso=reso, seed_mask=seed_mask,
@@ -177,10 +185,17 @@ def einsteining(runs, TR, PosiMax, THR=0.2, FIXED=1, Sm=8, only_lag=False, downs
         return lagdir
     rlag = reslice_lagmap(os.path.join(lagdir, 'LagMap.nii'), ref, os.path.join(wd, 'rLagMap.nii'))
     shutil.copy(rlag, lagdir)
-    for r, run in enumerate(runs, 1):
+    def _dep(r):
+        run = runs[r - 1]
         print(f'Deperfusioning {run_basename(run)}', flush=True)
         deperf(run, rlag, TR, r, n, lagdir=lagdir, reso=reso, outdir=wd,
-               span=(0.65 + 0.35 * (r - 1) / n, 0.65 + 0.35 * r / n))
+               span=(0.65 + 0.35 * (r - 1) / n, 0.65 + 0.35 * r / n) if jobs == 1 else None)
+        if jobs > 1:
+            done[0] += 1
+            progress.report(f'deperfusioned run {done[0] - n}/{n}', 0.65 + 0.35 * (done[0] - n) / n)
+    done[0] = n
+    with ThreadPoolExecutor(max_workers=min(jobs, n)) as ex:
+        list(ex.map(_dep, range(1, n + 1)))
     for run in runs:
         b = run_basename(run)
         d = os.path.join(results_dir, b + '_dep')

@@ -79,7 +79,7 @@ def deperf(orig_vols, lag_nii, TR, section, Nruns, lagdir=None, reso=None, outdi
     Moto = Moto[(section - 1) * Nvols:section * Nvols]
     savemat(os.path.join(outdir, 'sLFO.mat'), {'Motodata': Moto})
 
-    sp = progress.Span('deperf: filtering', *span)
+    sp = progress.Span('deperf: filtering', *span) if span else (lambda f: None)
     sp(0.05)
     print('Filtering...', flush=True)
     Y = np.asanyarray(img.dataobj).astype(np.float32)
@@ -89,7 +89,8 @@ def deperf(orig_vols, lag_nii, TR, section, Nruns, lagdir=None, reso=None, outdi
     out = np.repeat(Tmean[..., None], Nvols, axis=3).astype(np.float32)
     print('Cleaning images...', flush=True)
     LL = np.arange(-MaxLag, MaxLag + 1)
-    sp.stage = 'deperf: regressing lag regions'
+    if span:
+        sp.stage = 'deperf: regressing lag regions'
     for p, L in enumerate(LL):
         sp(0.4 + 0.55 * p / len(LL))
         m = (Lag == L) & (Tmean != 0)

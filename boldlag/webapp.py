@@ -123,15 +123,16 @@ def app():
         despike = c2.checkbox('Spike regressors', value=S.get('despike', True), key='despike')
         spike_thr = c3.number_input('spike if DVARS > thr x median', value=float(S.get('spike_thr', 1.5)), key='spike_thr')
         only_lag = c4.checkbox('Lag mapping only', value=S.get('only_lag', False), key='only_lag')
+        jobs = c4.number_input('parallel runs (jobs)', 1, 32, int(S.get('jobs', 1)), key='jobs', help='scrub / deperf this many runs at once; memory ~3x one run per job')
         settings = dict(mode=mode, runs=runs, **{'p.' + k: v for k, v in p.items()}, subj=subj, pattern=pattern, nvols=nvols,
-                        results_dir=results_dir, workname=workname, downsample=downsample, despike=despike, spike_thr=spike_thr, only_lag=only_lag)
+                        results_dir=results_dir, workname=workname, downsample=downsample, despike=despike, spike_thr=spike_thr, only_lag=only_lag, jobs=jobs)
         if runs:
             k = kw(p)
             def job():
                 from .einsteining import einsteining
                 d = einsteining(runs, k['TR'], k['PosiMax'], k['THR'], k['FIXED'], k['Sm'], only_lag, downsample, k['reso'],
                                 k['seed_mask'], k['mask_pct'], k['lp_hz'], workname, results_dir.strip() or None,
-                                spike_thr=spike_thr if despike else None)
+                                spike_thr=spike_thr if despike else None, jobs=int(jobs))
                 return d, os.path.join(os.path.dirname(d), 'Tmean.nii')
     elif mode.startswith('Lag'):
         c1, c2 = st.columns([3, 1])

@@ -155,6 +155,9 @@ blocks (`boldlag.filters.bptf/regfilt/subsamp2offc`, `boldlag.spm.smooth/reslice
   brain signal, and a volume (plus the previous one) is a spike when DVARS exceeds
   `--spike-thr` (default 1.5) x median; all regressors including the spike columns
   are removed (`--no-despike` to omit them).  The same fix is applied to the MATLAB scripts in `matlab/`.
+* `--jobs N` scrubs / deperfusions N runs at a time (threads; outputs are identical, about
+  N-fold faster for those steps; each job needs roughly three times the size of one run in
+  memory, so keep 1 on laptops).
 
 （日本語の説明は[最後](#日本語)にあります）
 
