@@ -39,8 +39,13 @@ lag maps are identical when the MATLAB run used fslmaths; with niimath, whose `-
 deviates from FSL's by ~1e-3 of the signal, 0.06 % of voxels change by one lag step).
 
 ```
-pip install .            # gives the `boldlag` command (or use `python -m boldlag`)
+python3 -m venv ~/boldlag-env && source ~/boldlag-env/bin/activate     # recommended (macOS/Linux)
+pip install "boldlag[web] @ git+https://github.com/aso-toshihiko/BOLDLagMapping_Deperfusioning"
+# or, from a clone:  pip install .[web]      ([web] adds streamlit + matplotlib; omit for the core only)
+boldlag -h
 ```
+On macOS use `python3 -m pip` if `pip` is not found; the desktop GUI needs a Python with
+tkinter (python.org installer or `brew install python-tk`), the browser front end does not.
 
 Human and monkey data are handled by the same code.  The only conceptual
 difference is the region providing the initial global signal (`--seed-mask`):
