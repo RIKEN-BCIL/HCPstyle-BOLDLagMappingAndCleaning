@@ -75,6 +75,18 @@ def region_means(lagdir):
     return R
 
 
+def _nruns(lagdir):
+    """Number of concatenated runs (Runs.json of the work folder, else the 'catN' name tag)."""
+    import os, json, re
+    p = os.path.join(os.path.dirname(lagdir), 'Runs.json')
+    try:
+        with open(p) as f:
+            return len(json.load(f)['Runs'])
+    except Exception:
+        m = re.search(r'cat(\d+)$', os.path.basename(lagdir))
+        return int(m.group(1)) if m else 1
+
+
 def lag_structure_plot(lagdir, out_png=None, t0=0, n=300, lim=4.0, shifted=True, title=None, amplitude='normalised'):
     """Rainbow plot of the sLFO time courses of a lag-map folder (``Seeds``), one line per
     lag coloured like the lag map (jet, +-lim s).  ``shifted=True`` plots the seeds
@@ -116,6 +128,11 @@ def lag_structure_plot(lagdir, out_png=None, t0=0, n=300, lim=4.0, shifted=True,
     ax.set_facecolor((0.5, 0.5, 0.5))
     for k in np.argsort(np.abs(lags))[::-1]:                    # draw large |lag| first, lag 0 on top
         ax.plot(t[sl], M[sl, k], color=cm.jet(norm(lags[k])), lw=1.2)
+    nruns = _nruns(lagdir)
+    if nruns > 1:                                                # run boundaries of the concatenation
+        for b in np.arange(1, nruns) * t[-1] * (M.shape[0] / (M.shape[0] - 1)) / nruns:
+            if t[sl][0] < b < t[sl][-1]:
+                ax.axvline(b, color='k', ls='--', lw=0.8)
     ax.set_xlim(t[sl][0], t[sl][-1])
     ax.set_xlabel('time (s)')
     ax.set_ylabel(ylabel)

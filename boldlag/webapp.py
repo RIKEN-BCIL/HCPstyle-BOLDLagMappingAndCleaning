@@ -204,14 +204,17 @@ def app():
         with tabs[2]:
             try:
                 from .deperf import load_seeds
+                from .viewer import _lag_step
+                step = _lag_step(lagdir)
                 T = load_seeds(lagdir).shape[0]
                 c1, c2, c3, c4 = st.columns([1, 1, 2, 1])
                 shifted = c1.checkbox('time-shifted to lag (regressors)', value=True, key='view_shift')
                 amp = c2.selectbox('amplitude', ['normalised', 'scaled', 'data'], key='view_amp',
                                    help='normalised: as stored (a.u.); scaled: each sLFO scaled by regression onto the mean % signal of its lag region; data: the region means themselves (%)')
-                n = c4.number_input('samples', 50, 10000, 300, 50, key='view_n')
-                t0 = c3.slider('start sample', 0, max(0, T - 50), 0, key='view_t0')
-                st.image(lag_structure_plot(lagdir, os.path.join(lagdir, '_lagstructure.png'), t0, n, lim, shifted, amplitude=amp))
+                n = c4.number_input('window length (s)', 20.0, 20000.0, 200.0, 20.0, key='view_n')
+                t0 = c3.slider('window start (s)', 0.0, float(max(0, (T - 20) * step)), 0.0, key='view_t0',
+                               help='the sLFO covers all concatenated runs; this window is shown (dashed lines = run boundaries)')
+                st.image(lag_structure_plot(lagdir, os.path.join(lagdir, '_lagstructure.png'), int(t0 / step), max(2, int(n / step)), lim, shifted, amplitude=amp))
             except Exception as e:
                 st.warning(f'no Seeds in {lagdir}: {e}')
 

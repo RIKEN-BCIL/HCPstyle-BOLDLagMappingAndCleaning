@@ -372,12 +372,13 @@ class ResultWindow(tk.Toplevel):
         self.amp = tk.StringVar(value='normalised')
         cb = ttk.Combobox(c, textvariable=self.amp, values=['normalised', 'scaled', 'data'], width=10, state='readonly'); cb.pack(side='left', padx=4)
         cb.bind('<<ComboboxSelected>>', lambda _e: self.refresh_lag())
-        ttk.Label(c, text='start sample').pack(side='left')
-        self.t0 = tk.IntVar(value=0)
+        ttk.Label(c, text='window start (s)').pack(side='left')
+        self.t0 = tk.DoubleVar(value=0)
         self.t0scale = ttk.Scale(c, from_=0, to=1, variable=self.t0, command=lambda _v: self.refresh_lag()); self.t0scale.pack(side='left', fill='x', expand=True, padx=8)
-        ttk.Label(c, text='samples').pack(side='left')
-        self.nsamp = tk.IntVar(value=300)
-        ttk.Spinbox(c, from_=50, to=10000, increment=50, textvariable=self.nsamp, width=6, command=self.refresh_lag).pack(side='left', padx=4)
+        self.t0label = ttk.Label(c, text='0 s', width=7); self.t0label.pack(side='left')
+        ttk.Label(c, text='length (s)').pack(side='left')
+        self.nsec = tk.DoubleVar(value=200)
+        ttk.Spinbox(c, from_=20, to=10000, increment=20, textvariable=self.nsec, width=6, command=self.refresh_lag).pack(side='left', padx=4)
         self.l_lag = ttk.Label(self.t_lag); self.l_lag.pack()
         self._nsl = {}
         self.refresh()
@@ -397,7 +398,9 @@ class ResultWindow(tk.Toplevel):
         self._axis_changed()
         try:
             from .deperf import load_seeds
-            self.t0scale.configure(to=max(0, load_seeds(self.lagdir).shape[0] - 50))
+            from .viewer import _lag_step
+            self.step = _lag_step(self.lagdir)
+            self.t0scale.configure(to=max(0, (load_seeds(self.lagdir).shape[0] - 20) * self.step))
             self.refresh_lag()
         except Exception as e:
             self.l_lag.configure(text=f'no Seeds in {self.lagdir}: {e}')
@@ -409,8 +412,9 @@ class ResultWindow(tk.Toplevel):
 
     def refresh_lag(self):
         from .viewer import lag_structure_plot
-        png = lag_structure_plot(self.lagdir, os.path.join(self.lagdir, '_lagstructure.png'), int(self.t0.get()), int(self.nsamp.get()),
-                                 self.lim.get(), self.shifted.get(), amplitude=self.amp.get())
+        self.t0label.configure(text=f'{self.t0.get():.0f} s')
+        png = lag_structure_plot(self.lagdir, os.path.join(self.lagdir, '_lagstructure.png'), int(self.t0.get() / self.step),
+                                 max(2, int(self.nsec.get() / self.step)), self.lim.get(), self.shifted.get(), amplitude=self.amp.get())
         self._show(self.l_lag, png)
 
 
