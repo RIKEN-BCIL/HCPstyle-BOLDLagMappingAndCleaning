@@ -160,18 +160,19 @@ class App(tk.Tk):
 
     def _build_dep(self):
         t = self.tab_dep
-        f = ttk.LabelFrame(t, text='Deperfusion one run with an existing lag map'); f.grid(row=0, column=0, sticky='nsew', padx=6, pady=4)
-        self.dep_vols = tk.StringVar(); self.dep_lag = tk.StringVar(); self.dep_TR = tk.StringVar(value='0.72')
-        self.dep_sec = tk.StringVar(value='1'); self.dep_n = tk.StringVar(value='1'); self.dep_lagdir = tk.StringVar()
+        f = ttk.LabelFrame(t, text='Deperfusion runs with an existing lag map (list the runs in the order used for lag mapping)')
+        f.grid(row=0, column=0, sticky='nsew', padx=6, pady=4)
+        self.dep_runs = tk.Listbox(f, height=5, width=80, selectmode='extended')
+        self.dep_runs.grid(row=0, column=0, columnspan=4, sticky='we')
+        ttk.Button(f, text='Add files...', command=lambda: [self.dep_runs.insert('end', p) for p in filedialog.askopenfilenames(filetypes=[('NIfTI', '*.nii *.nii.gz'), ('all', '*')])]).grid(row=1, column=0, sticky='w')
+        ttk.Button(f, text='Remove', command=lambda: [self.dep_runs.delete(i) for i in reversed(self.dep_runs.curselection())]).grid(row=1, column=1, sticky='w')
+        self.dep_lag = tk.StringVar(); self.dep_TR = tk.StringVar(value='0.72'); self.dep_lagdir = tk.StringVar()
         self.dep_reso = tk.StringVar(); self.dep_out = tk.StringVar()
-        self._entry(f, 'Original 4D run', self.dep_vols, 0, browse='file', width=50)
-        self._entry(f, 'rLagMap.nii', self.dep_lag, 1, browse='file', width=50, tip='lag map on the grid of the run')
-        self._entry(f, 'TR (s)', self.dep_TR, 2, width=8)
-        self._entry(f, 'Run number', self.dep_sec, 3, width=8, tip='position of this run in the concatenation used for lag mapping')
-        self._entry(f, 'Number of runs', self.dep_n, 4, width=8)
-        self._entry(f, 'Lag folder (Seeds.mat)', self.dep_lagdir, 5, browse='dir', width=50, tip='empty = folder of rLagMap.nii')
-        self._entry(f, 'Tracking step (s)', self.dep_reso, 6, width=8, tip='as used for lag mapping; empty = TR')
-        self._entry(f, 'Output folder', self.dep_out, 7, browse='dir', width=50, tip='empty = current folder')
+        self._entry(f, 'rLagMap.nii', self.dep_lag, 2, browse='file', width=50, tip='lag map resliced on the grid of the runs')
+        self._entry(f, 'Lag folder (Seeds.mat)', self.dep_lagdir, 3, browse='dir', width=50, tip='empty = folder of rLagMap.nii')
+        self._entry(f, 'TR (s)', self.dep_TR, 4, width=8)
+        self._entry(f, 'Tracking step (s)', self.dep_reso, 5, width=8, tip='as used for lag mapping; empty = TR')
+        self._entry(f, 'Output folder', self.dep_out, 6, browse='dir', width=50, tip='empty = current folder')
 
     # ---------- run selection
     def _add_runs(self):
@@ -194,14 +195,14 @@ class App(tk.Tk):
             for k, var in v.items():
                 d[f'{grp}.{k}'] = var
         for k in ['subj', 'pattern', 'nvols', 'results_dir', 'workname', 'only_lag', 'downsample', 'despike', 'spike_thr',
-                  'lag_vols', 'lag_name', 'lag_range', 'lag_cwd', 'dep_vols', 'dep_lag', 'dep_TR', 'dep_sec', 'dep_n',
-                  'dep_lagdir', 'dep_reso', 'dep_out']:
+                  'lag_vols', 'lag_name', 'lag_range', 'lag_cwd', 'dep_lag', 'dep_TR', 'dep_lagdir', 'dep_reso', 'dep_out']:
             d[k] = getattr(self, k)
         return d
 
     def settings(self):
         d = {k: v.get() for k, v in self._vars().items()}
         d['runs'] = list(self.runs.get(0, 'end'))
+        d['dep_runs'] = list(self.dep_runs.get(0, 'end'))
         d['tab'] = self.nb.index(self.nb.select())
         return d
 
@@ -213,6 +214,10 @@ class App(tk.Tk):
             self.runs.delete(0, 'end')
             for r in d['runs']:
                 self.runs.insert('end', r)
+        if 'dep_runs' in d:
+            self.dep_runs.delete(0, 'end')
+            for r in d['dep_runs']:
+                self.dep_runs.insert('end', r)
         if 'tab' in d:
             self.nb.select(d['tab'])
 
@@ -277,14 +282,17 @@ class App(tk.Tk):
 
     def _job_dep(self):
         from .deperf import deperf
-        vols, lag = self.dep_vols.get().strip(), self.dep_lag.get().strip()
-        if not (os.path.exists(vols) and os.path.exists(lag)):
-            raise ValueError('run file or lag map not found')
+        runs, lag = list(self.dep_runs.get(0, 'end')), self.dep_lag.get().strip()
+        if not runs or not os.path.exists(lag):
+            raise ValueError('add the run files and the lag map')
         reso = float(self.dep_reso.get()) if self.dep_reso.get().strip() else None
+        TR, lagdir, out = float(self.dep_TR.get()), self.dep_lagdir.get().strip() or None, self.dep_out.get().strip() or '.'
         def job():
-            out = deperf(vols, lag, float(self.dep_TR.get()), int(self.dep_sec.get()), int(self.dep_n.get()),
-                         self.dep_lagdir.get().strip() or None, reso, self.dep_out.get().strip() or '.')
-            print('written', out)
+            for i, run in enumerate(runs):
+                print(f'Deperfusioning {os.path.basename(run)} (run {i + 1} of {len(runs)})', flush=True)
+                f = deperf(run, lag, TR, i + 1, len(runs), lagdir, reso, out,
+                           span=(i / len(runs), (i + 1) / len(runs)))
+                print('written', f)
             return dict(lagdir=None)
         return job
 

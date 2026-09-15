@@ -144,20 +144,23 @@ def app():
                 return d, os.path.join(wd, 'Tmean.nii')
     else:
         c1, c2 = st.columns([3, 1])
-        vols = c1.text_input('Original 4D run', value=S.get('dep_vols', ''), key='dep_vols')
-        lag = c1.text_input('rLagMap.nii (on the grid of the run)', value=S.get('dep_lag', ''), key='dep_lag')
+        S.setdefault('dep_runs_txt', S.get('dep_runs_txt', ''))
+        runs_txt = c1.text_area('Original 4D runs, one per line, in the order used for lag mapping', height=100, key='dep_runs_txt')
+        runs = [r.strip() for r in runs_txt.splitlines() if r.strip()]
+        lag = c1.text_input('rLagMap.nii (resliced on the grid of the runs)', value=S.get('dep_lag', ''), key='dep_lag')
         lagdir = c1.text_input('Lag folder with Seeds.mat (empty = folder of rLagMap)', value=S.get('dep_lagdir', ''), key='dep_lagdir')
         out = c1.text_input('Output folder', value=S.get('dep_out', '.'), key='dep_out')
         TR = c2.number_input('TR (s)', value=float(S.get('dep_TR', 0.72)), format='%.4f', key='dep_TR')
-        sec = c2.number_input('Run number', value=int(S.get('dep_sec', 1)), min_value=1, key='dep_sec')
-        n = c2.number_input('Number of runs', value=int(S.get('dep_n', 1)), min_value=1, key='dep_n')
         reso = c2.text_input('Tracking step (s; empty = TR)', value=S.get('dep_reso', ''), key='dep_reso')
-        settings = dict(mode=mode, dep_vols=vols, dep_lag=lag, dep_lagdir=lagdir, dep_out=out, dep_TR=TR, dep_sec=sec, dep_n=n, dep_reso=reso)
-        if vols.strip() and lag.strip():
+        settings = dict(mode=mode, dep_runs_txt=runs_txt, dep_lag=lag, dep_lagdir=lagdir, dep_out=out, dep_TR=TR, dep_reso=reso)
+        if runs and lag.strip():
             def job():
                 from .deperf import deperf
-                f = deperf(vols, lag, TR, int(sec), int(n), lagdir.strip() or None, float(reso) if reso.strip() else None, out.strip() or '.')
-                print('written', f)
+                for i, run in enumerate(runs):
+                    print(f'Deperfusioning {os.path.basename(run)} (run {i + 1} of {len(runs)})', flush=True)
+                    f = deperf(run, lag, TR, i + 1, len(runs), lagdir.strip() or None, float(reso) if reso.strip() else None,
+                               out.strip() or '.', span=(i / len(runs), (i + 1) / len(runs)))
+                    print('written', f)
                 return None, None
 
     st.sidebar.download_button('Save settings (JSON)', json.dumps(settings, indent=1, default=str), file_name='boldlag_settings.json')
