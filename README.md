@@ -60,7 +60,7 @@ macOS / Linux: copy the four lines one by one into Terminal (do not paste the ex
 ```
 python3 -m venv ~/boldlag-env
 source ~/boldlag-env/bin/activate
-pip install "boldlag[web] @ git+https://github.com/aso-toshihiko/BOLDLagMapping_Deperfusioning"
+pip install "boldlag[web] @ git+https://github.com/RIKEN-BCIL/HCPstyle-BOLDLagMappingAndCleaning"
 boldlag -h
 ```
 
