@@ -113,6 +113,7 @@ def track(Y, Bmask, roi, THR, limit, FIXED=1, on_step=None, span=None):
     Returns dict(Lag (V,) in steps, maxR, Seeds (T, 2*limit+1), RawSeed, InitSeed, Ysd).
     """
     T, V = Y.shape
+    Y0 = Y                                   # un-normalised data (percent signal), kept for the region means
     with np.errstate(invalid='ignore', divide='ignore'):
         sY = Y * roi[None]
         RawSeed = np.nanmean(sY, 1)
@@ -162,7 +163,14 @@ def track(Y, Bmask, roi, THR, limit, FIXED=1, on_step=None, span=None):
         if span:
             span(p / limit)
     Lag[Lag == 100] = np.nan
-    return dict(Lag=Lag, maxR=maxR, Seeds=np.stack(Seeds, 1), RawSeed=RawSeed, InitSeed=InitSeed, Ysd=Ysd)
+    # mean percent-signal time course of the voxels of each lag (-limit..limit): the sLFO with its real amplitude
+    RegionMean = np.full((T, 2 * limit + 1), np.nan)
+    with np.errstate(all='ignore'):
+        for k, L in enumerate(range(-limit, limit + 1)):
+            m = Lag == L
+            if m.any():
+                RegionMean[:, k] = np.nanmean(Y0[:, m], 1)
+    return dict(Lag=Lag, maxR=maxR, Seeds=np.stack(Seeds, 1), RawSeed=RawSeed, InitSeed=InitSeed, Ysd=Ysd, RegionMean=RegionMean)
 
 
 def _fill_nan_once(Y, strict=False):
@@ -285,6 +293,8 @@ def lag4d(name, TR, vols, PosiMax, THR=0.3, FIXED=1, Sm=8, rng=None, reso=None,
     savemat(os.path.join(outdir, 'Ysd.mat'), {'Ysd': np.nan_to_num(res['Ysd']).reshape(shp).ravel(order='F')[None]})   # MATLAB voxel order
     savemat(os.path.join(outdir, 'Seeds.mat'), {'Seeds': res['Seeds']})
     np.save(os.path.join(outdir, 'Seeds.npy'), res['Seeds'])
+    savemat(os.path.join(outdir, 'RegionMean.mat'), {'RegionMean': res['RegionMean']})
+    np.save(os.path.join(outdir, 'RegionMean.npy'), res['RegionMean'])
 
     Lag1 = res['Lag'].reshape(shp) * step
     _save(os.path.join(outdir, 'LagOrig.nii'), Lag1, aff)

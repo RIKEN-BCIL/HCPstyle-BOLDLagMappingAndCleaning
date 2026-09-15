@@ -368,6 +368,10 @@ class ResultWindow(tk.Toplevel):
         c = ttk.Frame(self.t_lag); c.pack(fill='x')
         self.shifted = tk.BooleanVar(value=True)
         ttk.Checkbutton(c, text='time-shifted to lag (regressors)', variable=self.shifted, command=self.refresh_lag).pack(side='left', padx=4)
+        ttk.Label(c, text='amplitude').pack(side='left')
+        self.amp = tk.StringVar(value='normalised')
+        cb = ttk.Combobox(c, textvariable=self.amp, values=['normalised', 'scaled', 'data'], width=10, state='readonly'); cb.pack(side='left', padx=4)
+        cb.bind('<<ComboboxSelected>>', lambda _e: self.refresh_lag())
         ttk.Label(c, text='start sample').pack(side='left')
         self.t0 = tk.IntVar(value=0)
         self.t0scale = ttk.Scale(c, from_=0, to=1, variable=self.t0, command=lambda _v: self.refresh_lag()); self.t0scale.pack(side='left', fill='x', expand=True, padx=8)
@@ -406,7 +410,7 @@ class ResultWindow(tk.Toplevel):
     def refresh_lag(self):
         from .viewer import lag_structure_plot
         png = lag_structure_plot(self.lagdir, os.path.join(self.lagdir, '_lagstructure.png'), int(self.t0.get()), int(self.nsamp.get()),
-                                 self.lim.get(), self.shifted.get())
+                                 self.lim.get(), self.shifted.get(), amplitude=self.amp.get())
         self._show(self.l_lag, png)
 
 

@@ -43,12 +43,47 @@ def _lag_step(lagdir):
     return 1.0
 
 
-def lag_structure_plot(lagdir, out_png=None, t0=0, n=300, lim=4.0, shifted=True, title=None):
+def region_means(lagdir):
+    """(T, 2*limit+1) mean percent-signal time course of the voxels of each lag
+    (columns = lag -limit..limit in tracking steps).  Read from ``RegionMean.npy``
+    (written by lag4d) or recomputed from the filtered 4D file and ``LagOrig.nii``."""
+    import os, json
+    from scipy.signal import resample_poly
+    f = os.path.join(lagdir, 'RegionMean.npy')
+    if os.path.exists(f):
+        return np.load(f)
+    with open(os.path.join(lagdir, 'params.json')) as fh:
+        P = json.load(fh)
+    cwd = os.path.dirname(lagdir)
+    unit = 'sec' if P.get('reso') else 'TR'
+    sm = os.path.join(cwd, f"sm{P['Sm']:g}_{2 * P['PosiMax']:g}{unit}.nii")
+    from .lag4d import _load4d
+    Y, _ = _load4d(sm, None if P.get('range') is None else np.asarray(P['range']))
+    Y = Y * (np.nanmax(np.abs(Y), 3) <= P.get('amp_gate', 4.0))[..., None]
+    Y = Y.reshape(-1, Y.shape[3]).T.astype(np.float64)
+    if P.get('reso') and abs(P['TR'] - P['reso']) > 1e-9:
+        Y = resample_poly(Y, int(round(P['TR'] * 100)), int(round(P['reso'] * 100)), axis=0, window=('kaiser', 5.0))
+    L = nib.load(os.path.join(lagdir, 'LagOrig.nii')).get_fdata().reshape(-1) / P['step']
+    limit = int(np.ceil(P['PosiMax'] / P['reso'])) if P.get('reso') else int(np.ceil(P['PosiMax']))
+    R = np.full((Y.shape[0], 2 * limit + 1), np.nan)
+    with np.errstate(all='ignore'):
+        for k, lag in enumerate(range(-limit, limit + 1)):
+            m = np.isfinite(L) & (np.abs(L - lag) < 1e-6)
+            if m.any():
+                R[:, k] = np.nanmean(Y[:, m], 1)
+    np.save(f, R)
+    return R
+
+
+def lag_structure_plot(lagdir, out_png=None, t0=0, n=300, lim=4.0, shifted=True, title=None, amplitude='normalised'):
     """Rainbow plot of the sLFO time courses of a lag-map folder (``Seeds``), one line per
     lag coloured like the lag map (jet, +-lim s).  ``shifted=True`` plots the seeds
     shifted in time to their lag (what deperfusioning regresses out, cf. drDeperf's
     ``Motodata``); ``False`` plots ``Seeds.mat`` as stored (drPlotRainbow).
-    ``t0``/``n`` select a window of samples.  Returns the PNG path."""
+    ``t0``/``n`` select a window of samples.  ``amplitude``: 'normalised' (a.u., as
+    stored), 'scaled' (each shifted seed scaled by its regression coefficient onto the
+    mean percent signal of its lag region, i.e. the sLFO in % signal) or 'data' (the
+    region means themselves, %).  Returns the PNG path."""
     import os
     import matplotlib
     matplotlib.use('Agg')
@@ -64,6 +99,16 @@ def lag_structure_plot(lagdir, out_png=None, t0=0, n=300, lim=4.0, shifted=True,
     else:
         M = S
         lags = (MaxLag - np.arange(S.shape[1])) * step           # Seeds column q <-> lag MaxLag-q
+    ylabel = 'sLFO (a.u.)'
+    if amplitude in ('scaled', 'data'):
+        R = region_means(lagdir)
+        if amplitude == 'data':
+            M, lags, ylabel = R, np.arange(-MaxLag, MaxLag + 1) * step, 'mean signal of lag region (%)'
+        else:
+            M = shifted_seeds(S, MaxLag) if shifted else S
+            R = R if shifted else R[:, ::-1]
+            beta = np.array([np.nan_to_num((M[:, k] @ np.nan_to_num(R[:, k])) / max(M[:, k] @ M[:, k], 1e-12)) for k in range(M.shape[1])])
+            M, ylabel = M * beta[None], 'sLFO scaled to the data (%)'
     t = np.arange(M.shape[0]) * step
     sl = slice(int(t0), int(t0) + int(n))
     norm = colors.Normalize(-lim, lim)
@@ -73,9 +118,10 @@ def lag_structure_plot(lagdir, out_png=None, t0=0, n=300, lim=4.0, shifted=True,
         ax.plot(t[sl], M[sl, k], color=cm.jet(norm(lags[k])), lw=1.2)
     ax.set_xlim(t[sl][0], t[sl][-1])
     ax.set_xlabel('time (s)')
-    ax.set_ylabel('sLFO (a.u.)')
+    ax.set_ylabel(ylabel)
     fig.colorbar(cm.ScalarMappable(norm=norm, cmap='jet'), ax=ax, pad=0.01, label='lag (s)')
-    ax.set_title(title or f"{'shifted sLFO (regressors)' if shifted else 'Seeds.mat'} - {os.path.basename(lagdir)}", fontsize=9)
+    ax.set_title(title or f"{'region means' if amplitude == 'data' else ('shifted sLFO (regressors)' if shifted else 'Seeds.mat')}"
+                 f"{' scaled to data' if amplitude == 'scaled' else ''} - {os.path.basename(lagdir)}", fontsize=9)
     fig.tight_layout()
     out_png = out_png or os.path.join(lagdir, 'sLFO_shifted.png' if shifted else 'Seeds.png')
     fig.savefig(out_png, dpi=100)
