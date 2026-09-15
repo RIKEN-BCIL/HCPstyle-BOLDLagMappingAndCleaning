@@ -38,14 +38,28 @@ MATLAB outputs of a full HCP subject and of macaque data (see `tests/validate_ma
 lag maps are identical when the MATLAB run used fslmaths; with niimath, whose `-bptf`
 deviates from FSL's by ~1e-3 of the signal, 0.06 % of voxels change by one lag step).
 
+Installation (macOS / Linux; copy the four lines one by one into Terminal — do not paste
+the explanations):
+
 ```
-python3 -m venv ~/boldlag-env && source ~/boldlag-env/bin/activate     # recommended (macOS/Linux)
+python3 -m venv ~/boldlag-env
+source ~/boldlag-env/bin/activate
 pip install "boldlag[web] @ git+https://github.com/aso-toshihiko/BOLDLagMapping_Deperfusioning"
-# or, from a clone:  pip install .[web]      ([web] adds streamlit + matplotlib; omit for the core only)
 boldlag -h
 ```
-On macOS use `python3 -m pip` if `pip` is not found; the desktop GUI needs a Python with
-tkinter (python.org installer or `brew install python-tk`), the browser front end does not.
+
+* Line 1 creates a private Python environment (once). On a fresh Mac the first `python3`
+  or `git` use pops up an "install the command line developer tools" dialog — accept it,
+  wait for it to finish, then run the line again.
+* Line 2 activates the environment; repeat it in every new Terminal window before using
+  `boldlag`.
+* Line 3 downloads and installs boldlag with its dependencies (`numpy`, `scipy`, `nibabel`,
+  `streamlit`, `matplotlib`). Omit `[web]` if you do not need the browser front end.
+  From a local clone use `pip install ".[web]"` instead.
+* Line 4 prints the usage; `boldlag <command> -h` lists the options of each command.
+* The desktop GUI (`boldlag-gui`) needs a Python with tkinter: on macOS install Python
+  from python.org (includes it) or `brew install python-tk`, then create the venv with
+  that Python. The browser front end (`boldlag-web`) has no such requirement.
 
 Human and monkey data are handled by the same code.  The only conceptual
 difference is the region providing the initial global signal (`--seed-mask`):
