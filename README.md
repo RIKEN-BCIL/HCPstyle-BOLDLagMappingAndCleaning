@@ -1,11 +1,10 @@
 # BOLDLagMapping
+## Extraction and removal of the sLFO with its time-lag structure in 4D blood oxygenation level dependent (BOLD) signal MRI data
 
 <p float="left">
   <img src="https://github.com/user-attachments/assets/07453bab-bf0c-425b-ab92-cfd9e4c3ca33" width="500" />
   <img src="https://github.com/user-attachments/assets/34b4bd5b-6c9f-4d2f-a94a-7c59db66fd1b" width="500" /> 
 </p>
-
-## Extraction and removal of the sLFO with its time-lag structure in 4D blood oxygenation level dependent (BOLD) signal MRI data
 
 **Contents**
 - [Introduction to lag mapping](#introduction-to-lag-mapping)
