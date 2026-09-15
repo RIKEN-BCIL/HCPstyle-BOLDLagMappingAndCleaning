@@ -15,7 +15,8 @@ if __package__ in (None, ''):            # run as a plain script by `streamlit r
 
 def _run_streamlit():
     from streamlit.web import cli
-    sys.argv = ['streamlit', 'run', os.path.abspath(__file__), '--server.headless', 'true'] + sys.argv[1:]
+    sys.argv = ['streamlit', 'run', os.path.abspath(__file__), '--server.headless', 'true',
+                '--client.toolbarMode', 'viewer'] + sys.argv[1:]      # viewer mode hides the Deploy/settings menu
     sys.exit(cli.main())
 
 
@@ -64,9 +65,9 @@ def app():
         p = {}
         p['TR'] = c1.number_input('TR (s)', value=float(S.get(prefix + 'TR', 0.72)), format='%.4f', key=prefix + 'TR')
         p['PosiMax'] = c2.number_input('PosiMax (tracking range, TR or s with a tracking step)', value=float(S.get(prefix + 'PosiMax', 9.0)), key=prefix + 'PosiMax')
-        p['THR'] = c3.number_input('Min cross-correlogram peak (THR)', value=float(S.get(prefix + 'THR', 0.2)), key=prefix + 'THR')
+        p['THR'] = c3.number_input('Min cross-correlogram peak (THR; 0 = accept all)', value=float(S.get(prefix + 'THR', 0.0)), key=prefix + 'THR')
         p['FIXED'] = c1.selectbox('Tracking', ['fixed', 'recursive'], index=0 if S.get(prefix + 'FIXED', 'fixed') == 'fixed' else 1, key=prefix + 'FIXED')
-        p['Sm'] = c2.number_input('Smoothing FWHM (mm; 8 human, 4 monkey, 0 none)', value=float(S.get(prefix + 'Sm', 8.0)), key=prefix + 'Sm')
+        p['Sm'] = c2.number_input('Smoothing FWHM (mm): up to 8 mm; 8 for human, 4 for monkey, 0 = none', value=float(S.get(prefix + 'Sm', 8.0)), key=prefix + 'Sm')
         p['reso'] = c3.text_input('Tracking step (s; empty = one TR, 0.5 for monkey)', value=S.get(prefix + 'reso', ''), key=prefix + 'reso')
         p['seed'] = c1.text_input("Seed mask ('hcp' = bundled cerebral mask, a NIfTI path, or empty = whole brain)", value=S.get(prefix + 'seed', 'hcp'), key=prefix + 'seed')
         p['mask_pct'] = c2.number_input('Brain mask % of robust range (10 human, 15 monkey)', value=float(S.get(prefix + 'mask_pct', 10.0)), key=prefix + 'mask_pct')

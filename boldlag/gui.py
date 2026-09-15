@@ -82,15 +82,15 @@ class App(tk.Tk):
 
     def _lag_params(self, parent, row0, monkey_note=True):
         """Common lag-mapping parameters; returns dict of tk variables."""
-        v = dict(TR=tk.StringVar(value='0.72'), PosiMax=tk.StringVar(value='9'), THR=tk.StringVar(value='0.2'),
+        v = dict(TR=tk.StringVar(value='0.72'), PosiMax=tk.StringVar(value='9'), THR=tk.StringVar(value='0'),
                  FIXED=tk.StringVar(value='fixed'), Sm=tk.StringVar(value='8'), reso=tk.StringVar(value=''),
                  seed=tk.StringVar(value='hcp'), mask_pct=tk.StringVar(value='10'), lp_hz=tk.StringVar(value=''))
         self._entry(parent, 'TR (s)', v['TR'], row0, tip='repetition time')
         self._entry(parent, 'PosiMax', v['PosiMax'], row0 + 1, tip='tracking range +-PosiMax, in TR (or in s when a tracking step is given)')
-        self._entry(parent, 'Min peak r (THR)', v['THR'], row0 + 2, tip='cross-correlogram peaks below this are ignored')
+        self._entry(parent, 'Min peak r (THR)', v['THR'], row0 + 2, tip='cross-correlogram peaks below this are ignored (0 = accept all)')
         ttk.Label(parent, text='Tracking').grid(row=row0 + 3, column=0, sticky='e', padx=4)
         ttk.Combobox(parent, textvariable=v['FIXED'], values=['fixed', 'recursive'], width=10, state='readonly').grid(row=row0 + 3, column=1, sticky='w')
-        self._entry(parent, 'Smoothing FWHM (mm)', v['Sm'], row0 + 4, tip='8 for human 2 mm data, 4 for monkey; 0 = none')
+        self._entry(parent, 'Smoothing FWHM (mm)', v['Sm'], row0 + 4, tip='up to 8 mm: 8 for human, 4 for monkey; 0 = none')
         self._entry(parent, 'Tracking step (s)', v['reso'], row0 + 5, tip='empty = one TR (human); 0.5 = monkey (data resampled)')
         self._entry(parent, 'Seed mask', v['seed'], row0 + 6, browse='file', tip="'hcp' = bundled cerebral mask, a NIfTI file, or empty = whole brain")
         self._entry(parent, 'Brain mask %', v['mask_pct'], row0 + 7, tip='% of robust range of the mean image (10 human, 15 monkey)')

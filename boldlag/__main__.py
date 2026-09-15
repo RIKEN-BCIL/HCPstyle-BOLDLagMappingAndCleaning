@@ -3,9 +3,9 @@ import argparse, sys, os
 
 
 def _common_lag_args(p):
-    p.add_argument('--thr', type=float, default=0.2, help='min cross-correlogram peak (default 0.2)')
+    p.add_argument('--thr', type=float, default=0.0, help='min cross-correlogram peak (default 0 = accept all)')
     p.add_argument('--fixed', type=int, default=1, help='1 = fixed-seed (default), 0 = recursive tracking')
-    p.add_argument('--sm', type=float, default=8, help='smoothing FWHM mm (default 8)')
+    p.add_argument('--sm', type=float, default=8, help='smoothing FWHM mm, up to 8: 8 human, 4 monkey, 0 none (default 8)')
     p.add_argument('--reso', type=float, default=None, help='tracking step in s (data resampled); default = 1 TR')
     p.add_argument('--seed-mask', default=None, help="'hcp' (bundled cerebral mask), a NIfTI file, or omit for whole brain")
     p.add_argument('--mask-pct', type=float, default=10, help='brain mask: %% of robust range of the mean image (10; 15 for monkey)')
