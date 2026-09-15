@@ -94,7 +94,7 @@ Notes on differences from the MATLAB scripts
 
 （最後に日本語あり）
 
-### Scripts: `matlab/` (MATLAB, issue #2 fixed) and `boldlag/` (Python port, see below). Older versions in Releases.
+### Scripts: `matlab/` (MATLAB, issue #2 fixed) and `boldlag/` (Python port, see above). Older versions in Releases.
 contact: Toshihiko ASO aso.toshihiko@gmail.com / https://www.researchgate.net/profile/Toshihiko_Aso
 
 ![lagmaps](https://github.com/RIKEN-BCIL/BOLDLagMapping/blob/master/LagMaps.jpg)
