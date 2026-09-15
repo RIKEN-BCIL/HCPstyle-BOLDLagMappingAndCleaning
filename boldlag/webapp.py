@@ -105,6 +105,13 @@ def app():
         S.setdefault('runs_txt', '\n'.join(S.get('runs', [])))
         runs_txt = st.text_area('Run files (one per line)', height=120, key='runs_txt')
         runs = [r.strip() for r in runs_txt.splitlines() if r.strip()]
+        if runs and os.path.exists(runs[0]):
+            from .einsteining import header_tr
+            h = header_tr(runs[0])
+            if h:
+                st.caption(f'TR in the NIfTI header of the first run: **{h:g} s**')
+                if st.button(f'Use TR = {h:g} s from the header'):
+                    S['p.TR'] = float(h); st.rerun()
         st.subheader('Lag mapping')
         p = lag_params('p.')
         st.subheader('Pipeline options')
@@ -132,6 +139,13 @@ def app():
         name = c2.text_input('Name tag', value=S.get('lag_name', 'run1'), key='lag_name')
         rng = c2.text_input('Time range (MATLAB style, e.g. 1:500)', value=S.get('lag_range', ''), key='lag_range')
         cwd = c1.text_input('Work folder (empty = folder of the 4D file)', value=S.get('lag_cwd', ''), key='lag_cwd')
+        if vols.strip() and os.path.exists(vols.strip()):
+            from .einsteining import header_tr
+            h = header_tr(vols.strip())
+            if h:
+                st.caption(f'TR in the NIfTI header: **{h:g} s**')
+                if st.button(f'Use TR = {h:g} s from the header'):
+                    S['l.TR'] = float(h); st.rerun()
         p = lag_params('l.')
         settings = dict(mode=mode, lag_vols=vols, lag_name=name, lag_range=rng, lag_cwd=cwd, **{'l.' + k: v for k, v in p.items()})
         if vols.strip():

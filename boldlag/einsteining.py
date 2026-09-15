@@ -25,6 +25,23 @@ from .spm import reslice
 from . import progress
 
 
+def header_tr(nii):
+    """TR (s) stored in the NIfTI header (pixdim[4]), or None."""
+    try:
+        z = nib.load(nii).header.get_zooms()
+        return float(z[3]) if len(z) > 3 and z[3] > 0 else None
+    except Exception:
+        return None
+
+
+def check_tr(nii, TR):
+    """Warn (stdout) when the header TR of ``nii`` differs from ``TR`` by more than 1 %."""
+    h = header_tr(nii)
+    if h and abs(h - float(TR)) > 0.01 * h:
+        print(f'*** WARNING: TR given = {TR} s but the NIfTI header of {os.path.basename(nii)} says {h:g} s ***', flush=True)
+    return h
+
+
 def run_basename(f):
     b = os.path.basename(f)
     return b[:-7] if b.endswith('.nii.gz') else os.path.splitext(b)[0]
@@ -129,6 +146,7 @@ def einsteining(runs, TR, PosiMax, THR=0.2, FIXED=1, Sm=8, only_lag=False, downs
     and ``*SBRef.nii.gz`` next to them).  Other arguments as in :func:`lag4d`.
     Returns the lag-map folder."""
     runs = [os.path.abspath(r) for r in runs]
+    check_tr(runs[0], TR)
     results_dir = results_dir or os.path.dirname(os.path.dirname(runs[0]))
     ref = glob.glob(os.path.join(os.path.dirname(runs[0]), '*SBRef.nii*'))
     if not ref:

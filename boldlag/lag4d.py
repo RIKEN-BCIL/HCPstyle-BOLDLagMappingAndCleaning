@@ -231,6 +231,9 @@ def lag4d(name, TR, vols, PosiMax, THR=0.3, FIXED=1, Sm=8, rng=None, reso=None,
     """
     cwd = os.path.abspath(cwd or os.getcwd())
     TR = float(TR); PosiMax = float(PosiMax); THR = float(THR); FIXED = int(FIXED); Sm = float(Sm)
+    if os.path.exists(vols):
+        from .einsteining import check_tr
+        check_tr(vols, TR)
     MaxLag = PosiMax * 2
     if reso:
         step, unit, limit = float(reso), 'sec', int(np.ceil(PosiMax / reso))

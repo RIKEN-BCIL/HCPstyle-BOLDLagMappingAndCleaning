@@ -152,6 +152,7 @@ class App(tk.Tk):
         f = ttk.LabelFrame(t, text='Input'); f.grid(row=0, column=0, sticky='nsew', padx=6, pady=4)
         self.lag_vols = tk.StringVar(); self.lag_name = tk.StringVar(value='run1'); self.lag_range = tk.StringVar(); self.lag_cwd = tk.StringVar()
         self._entry(f, '4D file', self.lag_vols, 0, browse='file', width=50, tip='motion corrected, normalised (e.g. REST4run.nii.gz)')
+        self.lag_vols.trace_add('write', lambda *_: os.path.exists(self.lag_vols.get()) and self._tr_from_header(self.lag_vols.get(), self.lv['TR']))
         self._entry(f, 'Name tag', self.lag_name, 1, width=16, tip='appended to the result folder name')
         self._entry(f, 'Time range', self.lag_range, 2, width=16, tip="MATLAB style, e.g. 1:500 or 1:2:500 (empty = all)")
         self._entry(f, 'Work folder', self.lag_cwd, 3, browse='dir', width=50, tip='empty = folder of the 4D file')
@@ -178,6 +179,17 @@ class App(tk.Tk):
     def _add_runs(self):
         for p in filedialog.askopenfilenames(filetypes=[('NIfTI', '*.nii *.nii.gz'), ('all', '*')]):
             self.runs.insert('end', p)
+        self._tr_from_header(self.runs.get(0) if self.runs.size() else None, self.pv['TR'])
+
+    def _tr_from_header(self, nii, var):
+        """Set the TR field from the NIfTI header and report it in the log."""
+        if not nii:
+            return
+        from .einsteining import header_tr
+        h = header_tr(nii)
+        if h:
+            var.set(f'{h:g}')
+            self.log.insert('end', f'TR read from the header of {os.path.basename(nii)}: {h:g} s\n')
 
     def _find_runs(self):
         from .einsteining import find_runs
@@ -185,6 +197,7 @@ class App(tk.Tk):
             nv = int(self.nvols.get()) if self.nvols.get().strip() else None
             for r in find_runs(self.subj.get(), self.pattern.get(), nvols=nv):
                 self.runs.insert('end', r)
+            self._tr_from_header(self.runs.get(0) if self.runs.size() else None, self.pv['TR'])
         except Exception as e:
             messagebox.showerror('Find runs', str(e))
 
