@@ -330,21 +330,84 @@ class App(tk.Tk):
             p = filedialog.askopenfilename(title='LagMap.nii', filetypes=[('NIfTI', '*.nii *.nii.gz')])
             if not p:
                 return
-            lagmap = p
-            under = os.path.join(os.path.dirname(os.path.dirname(p)), 'Tmean.nii')
-        else:
-            lagmap = os.path.join(lagdir, 'LagMap.nii')
-            under = (self.result or {}).get('underlay') or os.path.join(os.path.dirname(lagdir), 'Tmean.nii')
+            lagdir = os.path.dirname(p)
+        under = (self.result or {}).get('underlay') or os.path.join(os.path.dirname(lagdir), 'Tmean.nii')
         try:
-            from .viewer import lagmap_montage
-            png = lagmap_montage(lagmap, under if under and os.path.exists(under) else None, lim=4.0)
+            ResultWindow(self, lagdir, under if os.path.exists(under) else None)
         except Exception as e:
-            messagebox.showerror('Montage', str(e))
-            return
-        win = tk.Toplevel(self); win.title(lagmap)
+            messagebox.showerror('Results', str(e))
+
+
+class ResultWindow(tk.Toplevel):
+    """Montage, slice viewer and lag-structure (sLFO) plot of one lag-map folder."""
+    def __init__(self, master, lagdir, underlay=None):
+        super().__init__(master)
+        self.title(lagdir)
+        self.lagdir, self.under = lagdir, underlay
+        self.lagmap = os.path.join(lagdir, 'LagMap.nii')
+        self.lim = tk.DoubleVar(value=4.0)
+        top = ttk.Frame(self); top.pack(fill='x', padx=6, pady=4)
+        ttk.Label(top, text='colour range ± s').pack(side='left')
+        ttk.Spinbox(top, from_=0.5, to=20, increment=0.5, textvariable=self.lim, width=5, command=self.refresh).pack(side='left', padx=4)
+        nb = ttk.Notebook(self); nb.pack(fill='both', expand=True)
+        self.nb = nb
+        # montage
+        self.t_mont = ttk.Frame(nb); nb.add(self.t_mont, text=' Montage ')
+        self.l_mont = ttk.Label(self.t_mont); self.l_mont.pack()
+        # slice viewer
+        self.t_slice = ttk.Frame(nb); nb.add(self.t_slice, text=' Slice viewer ')
+        c = ttk.Frame(self.t_slice); c.pack(fill='x')
+        self.axis = tk.IntVar(value=2)
+        for k, nm in enumerate(['sagittal', 'coronal', 'axial']):
+            ttk.Radiobutton(c, text=nm, variable=self.axis, value=k, command=self._axis_changed).pack(side='left', padx=4)
+        self.idx = tk.IntVar(value=0)
+        self.scale = ttk.Scale(c, from_=0, to=1, variable=self.idx, command=lambda _v: self.refresh_slice()); self.scale.pack(side='left', fill='x', expand=True, padx=8)
+        self.l_slice = ttk.Label(self.t_slice); self.l_slice.pack()
+        # lag structure
+        self.t_lag = ttk.Frame(nb); nb.add(self.t_lag, text=' Lag structure (sLFO) ')
+        c = ttk.Frame(self.t_lag); c.pack(fill='x')
+        self.shifted = tk.BooleanVar(value=True)
+        ttk.Checkbutton(c, text='time-shifted to lag (regressors)', variable=self.shifted, command=self.refresh_lag).pack(side='left', padx=4)
+        ttk.Label(c, text='start sample').pack(side='left')
+        self.t0 = tk.IntVar(value=0)
+        self.t0scale = ttk.Scale(c, from_=0, to=1, variable=self.t0, command=lambda _v: self.refresh_lag()); self.t0scale.pack(side='left', fill='x', expand=True, padx=8)
+        ttk.Label(c, text='samples').pack(side='left')
+        self.nsamp = tk.IntVar(value=300)
+        ttk.Spinbox(c, from_=50, to=10000, increment=50, textvariable=self.nsamp, width=6, command=self.refresh_lag).pack(side='left', padx=4)
+        self.l_lag = ttk.Label(self.t_lag); self.l_lag.pack()
+        self._nsl = {}
+        self.refresh()
+
+    def _show(self, label, png):
         img = tk.PhotoImage(file=png)
-        lbl = ttk.Label(win, image=img); lbl.image = img; lbl.pack()
-        ttk.Label(win, text=png).pack()
+        label.configure(image=img); label.image = img
+
+    def _axis_changed(self):
+        import nibabel as nib
+        n = nib.load(self.lagmap).shape[self.axis.get()]
+        self.scale.configure(to=n - 1); self.idx.set(n // 2); self.refresh_slice()
+
+    def refresh(self):
+        from .viewer import lagmap_montage
+        self._show(self.l_mont, lagmap_montage(self.lagmap, self.under, lim=self.lim.get()))
+        self._axis_changed()
+        try:
+            from .deperf import load_seeds
+            self.t0scale.configure(to=max(0, load_seeds(self.lagdir).shape[0] - 50))
+            self.refresh_lag()
+        except Exception as e:
+            self.l_lag.configure(text=f'no Seeds in {self.lagdir}: {e}')
+
+    def refresh_slice(self):
+        from .viewer import slice_image
+        png, _ = slice_image(self.lagmap, self.under, self.axis.get(), int(self.idx.get()), self.lim.get())
+        self._show(self.l_slice, png)
+
+    def refresh_lag(self):
+        from .viewer import lag_structure_plot
+        png = lag_structure_plot(self.lagdir, os.path.join(self.lagdir, '_lagstructure.png'), int(self.t0.get()), int(self.nsamp.get()),
+                                 self.lim.get(), self.shifted.get())
+        self._show(self.l_lag, png)
 
 
 def main(argv=None):

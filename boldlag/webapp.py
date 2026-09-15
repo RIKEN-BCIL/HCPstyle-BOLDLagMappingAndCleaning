@@ -183,14 +183,35 @@ def app():
             raise
         finally:
             progress.set_callback(None)
-    if S.get('last') and S['last'][0]:
-        lagdir, under = S['last']
-        try:
-            from .viewer import lagmap_montage
-            png = lagmap_montage(os.path.join(lagdir, 'LagMap.nii'), under if under and os.path.exists(under) else None)
-            st.image(png, caption=lagdir)
-        except Exception as e:
-            st.warning(f'montage: {e}')
+    st.divider()
+    st.subheader('Results')
+    last = S.get('last') or (None, None)
+    lagdir = st.text_input('Lag-map folder (filled automatically after a run; or type one to view)', value=last[0] or '', key='view_lagdir')
+    if lagdir and os.path.exists(os.path.join(lagdir, 'LagMap.nii')):
+        under = last[1] if last[1] and os.path.exists(str(last[1])) else os.path.join(os.path.dirname(lagdir), 'Tmean.nii')
+        under = under if os.path.exists(under) else None
+        lim = st.slider('colour range ± s', 0.5, 20.0, 4.0, 0.5, key='view_lim')
+        tabs = st.tabs(['Montage', 'Slice viewer', 'Lag structure (sLFO)'])
+        from .viewer import lagmap_montage, slice_image, lag_structure_plot
+        with tabs[0]:
+            st.image(lagmap_montage(os.path.join(lagdir, 'LagMap.nii'), under, lim=lim), caption=lagdir)
+        with tabs[1]:
+            import nibabel as nib
+            shape = nib.load(os.path.join(lagdir, 'LagMap.nii')).shape
+            axis = ['sagittal', 'coronal', 'axial'].index(st.radio('orientation', ['sagittal', 'coronal', 'axial'], index=2, horizontal=True, key='view_axis'))
+            idx = st.slider('slice', 0, shape[axis] - 1, shape[axis] // 2, key=f'view_idx{axis}')
+            st.image(slice_image(os.path.join(lagdir, 'LagMap.nii'), under, axis, idx, lim)[0])
+        with tabs[2]:
+            try:
+                from .deperf import load_seeds
+                T = load_seeds(lagdir).shape[0]
+                c1, c2, c3 = st.columns([1, 2, 1])
+                shifted = c1.checkbox('time-shifted to lag (regressors)', value=True, key='view_shift')
+                n = c3.number_input('samples', 50, 10000, 300, 50, key='view_n')
+                t0 = c2.slider('start sample', 0, max(0, T - 50), 0, key='view_t0')
+                st.image(lag_structure_plot(lagdir, os.path.join(lagdir, '_lagstructure.png'), t0, n, lim, shifted))
+            except Exception as e:
+                st.warning(f'no Seeds in {lagdir}: {e}')
 
 
 def _in_streamlit():
