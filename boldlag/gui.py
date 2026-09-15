@@ -86,7 +86,7 @@ class App(tk.Tk):
                  FIXED=tk.StringVar(value='fixed'), Sm=tk.StringVar(value='8'), reso=tk.StringVar(value=''),
                  seed=tk.StringVar(value='hcp'), mask_pct=tk.StringVar(value='10'), lp_hz=tk.StringVar(value=''))
         self._entry(parent, 'TR (s)', v['TR'], row0, tip='repetition time')
-        self._entry(parent, 'PosiMax', v['PosiMax'], row0 + 1, tip='tracking range +-PosiMax, in TR (or in s when a tracking step is given)')
+        self._entry(parent, 'Tracking range ±PosiMax', v['PosiMax'], row0 + 1, tip='in TR; in seconds when a tracking step is set')
         self._entry(parent, 'Min peak r (THR)', v['THR'], row0 + 2, tip='cross-correlogram peaks below this are ignored (0 = accept all)')
         ttk.Label(parent, text='Tracking').grid(row=row0 + 3, column=0, sticky='e', padx=4)
         ttk.Combobox(parent, textvariable=v['FIXED'], values=['fixed', 'recursive'], width=10, state='readonly').grid(row=row0 + 3, column=1, sticky='w')
@@ -95,6 +95,21 @@ class App(tk.Tk):
         self._entry(parent, 'Seed mask', v['seed'], row0 + 6, browse='file', tip="'hcp' = bundled cerebral mask, a NIfTI file, or empty = whole brain")
         self._entry(parent, 'Brain mask %', v['mask_pct'], row0 + 7, tip='% of robust range of the mean image (10 human, 15 monkey)')
         self._entry(parent, 'Low-pass (Hz)', v['lp_hz'], row0 + 8, tip='empty = 0.9/(2*PosiMax s)')
+        info = ttk.Label(parent, text='', foreground='#0044aa')
+        info.grid(row=row0 + 9, column=0, columnspan=4, sticky='w', padx=4, pady=4)
+        def upd(*_):
+            try:
+                P, TR = float(v['PosiMax'].get()), float(v['TR'].get())
+                if v['reso'].get().strip():
+                    r = float(v['reso'].get())
+                    info.config(text=f'= ±{P:g} s in steps of {r:g} s (resampled from TR {TR:g} s); band-pass 0.008–{0.9 / (2 * P):.3f} Hz')
+                else:
+                    info.config(text=f'= ±{P:g} TR = ±{P * TR:.2f} s in steps of one TR ({TR:g} s); band-pass 0.008–{0.9 / (2 * P * TR):.3f} Hz')
+            except (ValueError, ZeroDivisionError):
+                info.config(text='')
+        for k in ('PosiMax', 'TR', 'reso'):
+            v[k].trace_add('write', upd)
+        upd()
         return v
 
     def _lag_kwargs(self, v):

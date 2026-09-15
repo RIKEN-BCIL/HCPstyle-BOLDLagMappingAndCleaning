@@ -64,7 +64,7 @@ def app():
         c1, c2, c3 = st.columns(3)
         p = {}
         p['TR'] = c1.number_input('TR (s)', value=float(S.get(prefix + 'TR', 0.72)), format='%.4f', key=prefix + 'TR')
-        p['PosiMax'] = c2.number_input('PosiMax (tracking range, TR or s with a tracking step)', value=float(S.get(prefix + 'PosiMax', 9.0)), key=prefix + 'PosiMax')
+        p['PosiMax'] = c2.number_input('Tracking range ±PosiMax (in TR; in seconds when a tracking step is set)', value=float(S.get(prefix + 'PosiMax', 9.0)), key=prefix + 'PosiMax')
         p['THR'] = c3.number_input('Min cross-correlogram peak (THR; 0 = accept all)', value=float(S.get(prefix + 'THR', 0.0)), key=prefix + 'THR')
         p['FIXED'] = c1.selectbox('Tracking', ['fixed', 'recursive'], index=0 if S.get(prefix + 'FIXED', 'fixed') == 'fixed' else 1, key=prefix + 'FIXED')
         p['Sm'] = c2.number_input('Smoothing FWHM (mm): up to 8 mm; 8 for human, 4 for monkey, 0 = none', value=float(S.get(prefix + 'Sm', 8.0)), key=prefix + 'Sm')
@@ -72,6 +72,15 @@ def app():
         p['seed'] = c1.text_input("Seed mask ('hcp' = bundled cerebral mask, a NIfTI path, or empty = whole brain)", value=S.get(prefix + 'seed', 'hcp'), key=prefix + 'seed')
         p['mask_pct'] = c2.number_input('Brain mask % of robust range (10 human, 15 monkey)', value=float(S.get(prefix + 'mask_pct', 10.0)), key=prefix + 'mask_pct')
         p['lp_hz'] = c3.text_input('Low-pass Hz (empty = 0.9/(2 PosiMax s))', value=S.get(prefix + 'lp_hz', ''), key=prefix + 'lp_hz')
+        try:
+            if str(p['reso']).strip():
+                st.caption(f"Tracking range = ±{p['PosiMax']:g} s in steps of {float(p['reso']):g} s "
+                           f"(data resampled from TR {p['TR']:g} s); band-pass 0.008 – {0.9 / (2 * p['PosiMax']):.3f} Hz")
+            else:
+                st.caption(f"Tracking range = ±{p['PosiMax']:g} TR = ±{p['PosiMax'] * p['TR']:.2f} s in steps of one TR ({p['TR']:g} s); "
+                           f"band-pass 0.008 – {0.9 / (2 * p['PosiMax'] * p['TR']):.3f} Hz")
+        except (ValueError, ZeroDivisionError):
+            pass
         return p
 
     def kw(p):
