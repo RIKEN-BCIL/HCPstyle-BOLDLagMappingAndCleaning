@@ -2,6 +2,17 @@
 
 ## Extraction and removal of the sLFO with its time-lag structure in 4D blood oxygenation level dependent (BOLD) signal MRI data
 
+**Contents**
+- [Introduction to lag mapping](#introduction-to-lag-mapping)
+- [Python version (no MATLAB / SPM / FSL needed)](#python-version-no-matlab--spm--fsl-needed)
+  - [Installation](#installation) (macOS / Linux / Windows)
+  - [Usage: MATLAB → Python](#usage-matlab--python) · [Example](#example) · [Outputs](#outputs)
+  - [Front ends (GUI / browser)](#front-ends-gui--browser) · [Python API](#python-api)
+  - [Differences from the MATLAB scripts](#differences-from-the-matlab-scripts)
+- [MATLAB version](#matlab-version): [Dependencies](#dependencies) · [Usage](#usage)
+- [References](#references)
+- [日本語](#日本語)
+
 ### Introduction to lag mapping
 ```
 Lim = 2;
@@ -38,8 +49,9 @@ MATLAB outputs of a full HCP subject and of macaque data (see `tests/validate_ma
 lag maps are identical when the MATLAB run used fslmaths; with niimath, whose `-bptf`
 deviates from FSL's by ~1e-3 of the signal, 0.06 % of voxels change by one lag step).
 
-Installation (macOS / Linux; copy the four lines one by one into Terminal — do not paste
-the explanations):
+### Installation
+
+macOS / Linux: copy the four lines one by one into Terminal (do not paste the explanations):
 
 ```
 python3 -m venv ~/boldlag-env
@@ -67,6 +79,8 @@ boldlag -h
   from python.org (includes it) or `brew install python-tk`, then create the venv with
   that Python. The browser front end (`boldlag-web`) has no such requirement.
 
+### Usage: MATLAB → Python
+
 Human and monkey data are handled by the same code.  The only conceptual
 difference is the region providing the initial global signal (`--seed-mask`):
 
@@ -82,7 +96,9 @@ difference is the region providing the initial global signal (`--seed-mask`):
 | `Einsteining_v06_monkey` | `boldlag einsteining TR MaxLag --subject-dir Sdir --pattern 'BOLD_' --reso 0.5 --mask-pct 15 --seed-mask '' ...` |
 | `Einsteining_v06_hireso_monkey` (no down-sampling) | `... --no-downsample` |
 
-Example (HCP subject, as in the MATLAB release notes):
+### Example
+
+HCP subject, as in the MATLAB release notes:
 
 ```
 boldlag einsteining 0.72 9 --thr 0.2 --sm 8 \
@@ -90,12 +106,15 @@ boldlag einsteining 0.72 9 --thr 0.2 --sm 8 \
            /data/subject1/MNINonLinear/Results/rfMRI_REST1_AP/rfMRI_REST1_AP.nii.gz
 ```
 
+### Outputs
+
 Outputs go to `MNINonLinear/Results/Lag_concat_scrub/` with the same names as the
 MATLAB version (`z*.nii`, `mreg_z*.nii.gz`, `REST<n>run.nii.gz`, `sm8_18TR.nii`,
 `Lag_fix_18TR_thr2_sm8_cat<n>/{LagOrig,LagMap,MaxR}.nii`, `Seeds.mat`, `rLagMap.nii`,
 `<run>_dep.nii.gz`, `sLFO.mat`) plus `<run>_dep/` folders with symbolic links.
 
-Front ends
+### Front ends (GUI / browser)
+
 * `boldlag-gui [settings.json]` (or `python -m boldlag.gui`; tkinter, no extra dependency):
   the three functions with a log pane, a progress bar, a lag-map montage at the end and
   *File > Save/Load settings* (JSON).
@@ -104,12 +123,15 @@ Front ends
   (`boldlag-web --server.port 8501`, then open `http://<host>:8501`); settings can be
   downloaded / uploaded as JSON.
 
-Python API: `boldlag.lag4d.lag4d(...)`, `boldlag.merge4d.merge4d(...)`,
+### Python API
+
+`boldlag.lag4d.lag4d(...)`, `boldlag.merge4d.merge4d(...)`,
 `boldlag.deperf.deperf(...)`, `boldlag.einsteining.einsteining(...)`; the building
 blocks (`boldlag.filters.bptf/regfilt/subsamp2offc`, `boldlag.spm.smooth/reslice`,
 `boldlag.lag4d.track`) can be used on numpy arrays directly.
 
-Notes on differences from the MATLAB scripts
+### Differences from the MATLAB scripts
+
 * The low-pass cut-off of the band-pass filter is `0.9 / (2*PosiMax)` Hz with
   PosiMax in seconds (`drLag4Drev7`, `_longTR`).  `drLag4Drev7_monkey` divided by TR
   once more; use `--lp-hz` to reproduce that if needed.
@@ -123,9 +145,11 @@ Notes on differences from the MATLAB scripts
   `--spike-thr` (default 1.5) x median; all regressors including the spike columns
   are removed (`--no-despike` to omit them).  The same fix is applied to the MATLAB scripts in `matlab/`.
 
-（最後に日本語あり）
+## 日本語の説明は[最後](#日本語)にあります
 
-### Scripts: `matlab/` (MATLAB, issue #2 fixed) and `boldlag/` (Python port, see above). Older versions in Releases.
+## MATLAB version
+
+Scripts: `matlab/` (issue #2 fixed; also attached to Release Rev. 9). Python port: `boldlag/` (see above). Older versions in Releases.
 contact: Toshihiko ASO aso.toshihiko@gmail.com / https://www.researchgate.net/profile/Toshihiko_Aso
 
 ![lagmaps](https://github.com/RIKEN-BCIL/BOLDLagMapping/blob/master/LagMaps.jpg)
@@ -140,7 +164,7 @@ Install FSL & MATLAB then evoke MATLAB from the shell.
 [FSL]: https://fsl.fmrib.ox.ac.uk/fsl/fslwiki "FSL"
 [SPM12]: https://www.fil.ion.ucl.ac.uk/spm/software/spm12/
 
-### See Releases for usage
+### Usage
 
 **drLag4D** for tracking and **drDeperf** for deperfusioning.
 **Einsteining** is the pipeline script.
@@ -166,6 +190,8 @@ Fixed-seed tracking
 
 [Satow, T., Aso, T., Nishida, S., Komuro, T., Ueno, T., Oishi, N., … Fukuyama, H. (2017). Alteration of venous drainage route in idiopathic normal pressure hydrocephalus and normal aging. Frontiers in Aging Neuroscience, 9(NOV), 1–10.](https://doi.org/10.3389/fnagi.2017.00387)
 
+
+## 日本語
 
 下記は最初のsLFOを作る部分です。Yは縦が時間、横が全ボクセルの2次元にした元データです。
 ここからYYという3次元データを作り、この三次元目がラグになります。要するに縦（時間）が一個ずつズレていくだけです。
